@@ -1,0 +1,73 @@
+import express, {type Express, type Request, type Response} from 'express'
+import authMiddleware from './middlewares/auth.middlewares.js';
+import { prisma } from '../lib/db.js';
+import { checkUserExistance, createUser, signInUser } from './services/auth.services.js';
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+
+dotenv.config();
+const app: Express=express();
+app.use(express.json());
+app.use(cookieParser())
+
+app.post("/signup",async (req:Request , res:Response)=>{
+    const userPayload = req.body;
+    //TODO: Add zod type here for userPayload
+    if(!userPayload || !userPayload.number || !userPayload.password || !userPayload.name){
+        return res.status(400).json({message:"Missing args"})
+    }
+    const user = await checkUserExistance(userPayload.number.toString());
+    if(user){
+        return res.status(400).json({message:"User already exists"})
+    }
+    let createdUser;
+    try{
+         createdUser = await createUser({
+             ...userPayload,
+             number: userPayload.number.toString(),
+             name: userPayload.name.toString()
+         });
+    }catch(e){
+        return res.status(400).json({message:"Please try again later"})
+    }
+    const token = jwt.sign({userId:createdUser.userId}, process.env.JWT_SECRET as string)
+    res.cookie("token",token ,{
+        httpOnly:true,
+        secure:false,
+        sameSite:"lax"
+    })
+    return res.status(200).json({message:"User created"})
+})
+
+app.post("/signin",async(req:Request , res:Response)=>{
+   const userPayload = req.body;
+    //TODO: Add zod type here for userPayload
+    if(!userPayload || !userPayload.number || !userPayload.password){
+        return res.status(400).json({message:"Missing args"})
+    }
+    const user = await checkUserExistance(userPayload.number.toString());
+    if(!user){
+        return res.status(400).json({message:"User doesn't exist. Please signup"})
+    }
+   const a = await signInUser(userPayload , user.password)
+   if(!a){
+    return res.status(403).json({message:"Invalid password."})
+   }
+    const token = jwt.sign({userId:user.userId}, process.env.JWT_SECRET as string)
+    res.cookie("token",token ,{
+        httpOnly:true,
+        secure:false,
+        sameSite:"lax"
+    })
+    return res.status(200).json({"message":"Signed in"});
+  
+})
+app.get("/",authMiddleware,(req:Request , res:Response)=>{
+    
+})
+app.get("/",authMiddleware,(req:Request , res:Response)=>{
+    
+})
+
+export default app;
