@@ -15,13 +15,13 @@ export default function authMiddleware(req: Request,res: Response,next: NextFunc
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        if (typeof decoded === "string" || !("userId" in decoded)) {
+        if (typeof decoded === "string" || !("id" in decoded)) {
             return res.status(401).json({
                 message: "Invalid token",
             });
         }
 
-        req.userId = decoded.userId;
+        req.id = decoded.id;
         next();
     } catch (error) {
         return res.status(401).json({
