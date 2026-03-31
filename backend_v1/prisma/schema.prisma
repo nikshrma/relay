@@ -13,7 +13,7 @@ datasource db {
 }
 
 model User{
-  userId String @id @default(uuid()) 
+  id String @id @default(uuid()) 
   number String @unique
   password String
   name String
@@ -29,7 +29,7 @@ model Message{
   receiverId String
   senderId String
 
-  sender User @relation("SentMessages",fields: [senderId],references: [userId])
-  receiver User @relation("ReceivedMessages",fields: [receiverId],references: [userId])
+  sender User @relation("SentMessages",fields: [senderId],references: [id])
+  receiver User @relation("ReceivedMessages",fields: [receiverId],references: [id])
   @@index([senderId, receiverId])
 }
