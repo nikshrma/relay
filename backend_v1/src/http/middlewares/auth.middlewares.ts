@@ -8,7 +8,7 @@ export default function authMiddleware(req: Request,res: Response,next: NextFunc
             message: "No token provided",
         });
     }
-    const JWT_SECRET = process.env.JWT_PASS;
+    const JWT_SECRET = process.env.JWT_SECRET;
     if (!JWT_SECRET) {
         throw new Error("JWT_PASS is not defined");
     }

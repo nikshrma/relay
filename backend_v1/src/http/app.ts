@@ -82,6 +82,10 @@ app.get("/messages",authMiddleware,async(req:Request , res:Response)=>{
     const to = req.query.to as string;
     const from = req.query.from as string;
 
+    if (req.id !== to && req.id !== from) {
+        return res.status(403).json({ message:" Forbidden:you are not a participant in this conversation. "});
+    }
+
     if (!to || !from) {
     return res.status(400).json({message: "Missing 'to' or 'from' query params"});
     }
