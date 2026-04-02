@@ -17,11 +17,19 @@ export async function fetchUsers(id: string){
     return otherUsers;
 }
 
-export async function fetchMessages(to: string, from: string){
+export async function fetchMessages(userA: string, userB: string){
     const messages = await prisma.message.findMany({
         where:{
-            receiverId:to,
-            senderId:from
+            OR:[
+                {
+                    receiverId:userA,
+                    senderId:userB
+                },
+                {
+                    receiverId:userB,
+                    senderId:userA
+                }
+            ],
         },
         select:{
             content:true,
@@ -29,6 +37,9 @@ export async function fetchMessages(to: string, from: string){
             id:true,
             senderId:true,
             receiverId:true
+        },
+        orderBy:{
+            createdAt:"asc"
         }
     })
     return messages;
