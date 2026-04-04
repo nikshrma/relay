@@ -1,32 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
+import type { User, ApiMessage, Message, SignupPayload, SigninPayload } from "@/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-interface Users {
-    id: string,
-    name: string,
-    number: string,
-}
-interface apiMessage {
-    message: string
-}
-interface Message {
-    content: string,
-    createdAt: string,
-    id: string,
-    senderId: string,
-    receiverId: string
-}
-//TODO: move these over to types and add zod validation
-export interface SignupPayload {
-    number: string;
-    name: string;
-    password: string;
-}
-export interface SigninPayload {
-    number: string;
-    password: string;
-}
 
 class APIClient {
     private static instance: APIClient;
@@ -51,12 +26,12 @@ class APIClient {
         }
         return APIClient.instance;
     }
-    async signup(payload: SignupPayload): Promise<apiMessage> {
-        const { data } = await this.client.post<apiMessage>('/signup', payload);
+    async signup(payload: SignupPayload): Promise<ApiMessage> {
+        const { data } = await this.client.post<ApiMessage>('/signup', payload);
         return data;
     }
-    async signin(payload: SigninPayload): Promise<apiMessage> {
-        const { data } = await this.client.post<apiMessage>('/signin', payload);
+    async signin(payload: SigninPayload): Promise<ApiMessage> {
+        const { data } = await this.client.post<ApiMessage>('/signin', payload);
         return data;
     }
     async getMessages(userId: string): Promise<Message[]> {
@@ -67,10 +42,15 @@ class APIClient {
         });
         return data.messages;
     }
-    async getUsers(): Promise<Users[]> {
-        const {data} = await this.client.get<{users : Users[]}>('/users');
+    async getUsers(): Promise<User[]> {
+        const { data } = await this.client.get<{ users: User[] }>('/users');
         return data.users;
     }
+    async logout(): Promise<ApiMessage>{
+        const { data } = await this.client.post<ApiMessage>('/logout');
+        return data.message;
+    }
+    async me():
 }
 
 const api = APIClient.getInstance();
