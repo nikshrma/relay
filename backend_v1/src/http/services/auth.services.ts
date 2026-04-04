@@ -26,3 +26,16 @@ export async function signInUser(userPayload:any, hash:string){
     const a:boolean = await bcrypt.compare(userPayload.password , hash);
     return a;
 }
+export async function fetchMe(userId:string){
+    const user = await prisma.user.findUnique({
+        where:{
+            id:userId
+        },
+        select:{
+            number:true,
+            name:true,
+            id:true
+        }
+    })
+    return user;
+}
