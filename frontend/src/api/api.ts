@@ -18,6 +18,7 @@ class APIClient {
             if (error.response?.status===401){
                 //TODO: redirect to login page
             }
+            return Promise.reject(error);
         })
     }
     public static getInstance(): APIClient {
@@ -48,9 +49,12 @@ class APIClient {
     }
     async logout(): Promise<ApiMessage>{
         const { data } = await this.client.post<ApiMessage>('/logout');
-        return data.message;
+        return data;
     }
-    async me():
+    async me(): Promise<User>{
+        const { data } = await this.client.get<User>('/me');
+        return data;
+    }
 }
 
 const api = APIClient.getInstance();
