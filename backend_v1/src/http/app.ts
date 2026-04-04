@@ -32,7 +32,7 @@ app.post("/signup",async (req:Request , res:Response)=>{
     }catch(e){
         return res.status(400).json({message:"Please try again later"})
     }
-    const token = jwt.sign({id:createdUser.id}, process.env.JWT_SECRET as string)
+    const token = jwt.sign({id:createdUser.id}, process.env.JWT_SECRET as string, {expiresIn: "1d"})
     res.cookie("token",token ,{
         httpOnly:true,
         secure:false,
@@ -55,7 +55,7 @@ app.post("/signin",async(req:Request , res:Response)=>{
    if(!a){
     return res.status(403).json({message:"Invalid password."})
    }
-    const token = jwt.sign({id:user.id}, process.env.JWT_SECRET as string)
+    const token = jwt.sign({id:user.id}, process.env.JWT_SECRET as string,{expiresIn: "1d"})
     res.cookie("token",token ,{
         httpOnly:true,
         secure:false,
