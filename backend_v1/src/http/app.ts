@@ -37,7 +37,7 @@ app.post("/signup", async (req: Request, res: Response) => {
         secure: false,
         sameSite: "lax"
     })
-    return res.status(200).json({ message: "User created" })
+    return res.status(200).json({ message: "User created" , user:createdUser})
 })
 app.post("/signin", async (req: Request, res: Response) => {
     const userPayload = req.body;
@@ -59,7 +59,7 @@ app.post("/signin", async (req: Request, res: Response) => {
         secure: false,
         sameSite: "lax"
     })
-    return res.status(200).json({ "message": "Signed in" });
+    return res.status(200).json({ "message": "Signed in" , user });
 
 })
 app.get("/users", authMiddleware, async (req: Request, res: Response) => {
@@ -105,7 +105,7 @@ app.get("/me", authMiddleware, async (req: Request, res: Response) => {
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
-    return res.json(user);
+    return res.json({user});
 })
 
 export default app;
