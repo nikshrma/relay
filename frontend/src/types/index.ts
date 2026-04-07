@@ -6,6 +6,7 @@ export interface User {
 
 export interface ApiMessage {
     message: string;
+    user:User;
 }
 
 export interface Message {

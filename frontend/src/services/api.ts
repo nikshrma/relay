@@ -14,8 +14,8 @@ class APIClient {
             },
             withCredentials: true
         });
-        this.client.interceptors.response.use((response)=> response,(error)=>{
-            if (error.response?.status===401){
+        this.client.interceptors.response.use((response) => response, (error) => {
+            if (error.response?.status === 401) {
                 //TODO: redirect to login page
             }
             return Promise.reject(error);
@@ -47,13 +47,13 @@ class APIClient {
         const { data } = await this.client.get<{ users: User[] }>('/users');
         return data.users;
     }
-    async logout(): Promise<ApiMessage>{
+    async logout(): Promise<ApiMessage> {
         const { data } = await this.client.post<ApiMessage>('/logout');
         return data;
     }
-    async me(): Promise<User>{
-        const { data } = await this.client.get<User>('/me');
-        return data;
+    async me(): Promise<User> {
+        const { data } = await this.client.get<{user:User}>('/me');
+        return data.user;
     }
 }
 

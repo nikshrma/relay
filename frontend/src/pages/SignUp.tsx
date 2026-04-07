@@ -12,7 +12,7 @@ export default function SignUp(){
         e.preventDefault();
         setIsLoading(true);
         try{
-            await signup(number, password , name);
+            await signup({number, password , name});
             //TODO: navigate to /chats here
         }catch(e){
             //TODO: log error

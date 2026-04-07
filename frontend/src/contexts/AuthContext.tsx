@@ -1,5 +1,5 @@
 import api from "@/services/api";
-import type { User } from "@/types";
+import type { SigninPayload, SignupPayload, User } from "@/types";
 import React,{ createContext, useContext, useEffect, useState } from "react";
 
 
@@ -7,8 +7,8 @@ interface AuthContextType{
     user:User | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    signin: (number:string, password:string)=>Promise<void>;
-    signup: (number:string, password:string , name:string)=>Promise<void>
+    signin: (payload: SigninPayload)=>Promise<void>;
+    signup: (payload:SignupPayload)=>Promise<void>
     logout:()=>void
 }
 
@@ -24,15 +24,13 @@ export function AuthProvider({children}:{children: React.ReactNode}){
         .finally(()=>setIsLoading(false))
     },[])
 
-    const signup= async(number:string , password:string, name:string)=>{
-        await api.signup({name,number,password});
-        const currentUser = await api.me();
-        setUser(currentUser);
+    const signup= async(payload:SignupPayload)=>{
+        const data = await api.signup(payload);
+        setUser(data.user);
     }
-    const signin= async(number:string , password:string)=>{
-        await api.signin({number,password});
-        const currentUser = await api.me();
-        setUser(currentUser);
+    const signin= async(payload:SigninPayload)=>{
+       const data = await api.signin(payload);
+        setUser(data.user);
     }
     const logout = async()=>{
         await api.logout();
