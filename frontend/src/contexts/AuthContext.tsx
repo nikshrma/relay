@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import api from "@/services/api";
 import type { User } from "@/types";
 import React,{ createContext, useContext, useEffect, useState } from "react";
 
