@@ -36,7 +36,13 @@ export async function fetchMessages(userA: string, userB: string){
             createdAt:true,
             id:true,
             senderId:true,
-            receiverId:true
+            receiverId:true,
+            sender:{
+                select:{
+                    name:true,
+                    id:true
+                }
+            }
         },
         orderBy:{
             createdAt:"asc"
