@@ -14,6 +14,10 @@ export interface Message {
     id: string;
     senderId: string;
     receiverId: string;
+    sender:{
+        id:string;
+        name:string;
+    }
 }
 
 export interface SignupPayload {
