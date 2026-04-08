@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import type { User, ApiMessage, Message, SignupPayload, SigninPayload } from "@/types";
+import type { User, ApiMessage, AuthResponse, Message, SignupPayload, SigninPayload } from "@/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -27,12 +27,12 @@ class APIClient {
         }
         return APIClient.instance;
     }
-    async signup(payload: SignupPayload): Promise<ApiMessage> {
-        const { data } = await this.client.post<ApiMessage>('/signup', payload);
+    async signup(payload: SignupPayload): Promise<AuthResponse> {
+        const { data } = await this.client.post<AuthResponse>('/signup', payload);
         return data;
     }
-    async signin(payload: SigninPayload): Promise<ApiMessage> {
-        const { data } = await this.client.post<ApiMessage>('/signin', payload);
+    async signin(payload: SigninPayload): Promise<AuthResponse> {
+        const { data } = await this.client.post<AuthResponse>('/signin', payload);
         return data;
     }
     async getMessages(userId: string): Promise<Message[]> {
