@@ -37,7 +37,7 @@ app.post("/signup", async (req: Request, res: Response) => {
         secure: false,
         sameSite: "lax"
     })
-    return res.status(200).json({ message: "User created" , user:createdUser})
+    return res.status(200).json({ message: "User created" , user: createdUser})
 })
 app.post("/signin", async (req: Request, res: Response) => {
     const userPayload = req.body;
