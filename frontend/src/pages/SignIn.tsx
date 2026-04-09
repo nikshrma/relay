@@ -11,7 +11,7 @@ export default function SignIn(){
         e.preventDefault();
         setIsLoading(true);
         try{
-            await signin(number, password)
+            await signin({number, password})
             //TODO: navigate to /chats here
         }catch(e){
             //TODO: log error
