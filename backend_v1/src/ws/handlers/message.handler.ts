@@ -46,10 +46,11 @@ export async function sendMessage(senderId: string, msg: WsMessage) {
 
     const receiverSocket = getUserSocket(to);
     if (receiverSocket) {
+        const sender = await prisma.user.findUnique({ where: { id:senderId }});
         receiverSocket.send(
             JSON.stringify({
                 type: "receive_message",
-                payload: { from: senderId, content },
+                payload: { from: senderId, name: sender?.name, content },
             })
         );
     }
