@@ -46,7 +46,7 @@ export default function Chat() {
         return () => {
             socket.close();
         };
-    }, [])
+    }, [user])
     return <>
         <div>
             <UserList onSelectUser={setUserId} />

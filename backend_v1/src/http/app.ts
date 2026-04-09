@@ -5,11 +5,16 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { fetchMessages, fetchUsers } from './services/app.services.js';
+import cors from "cors";
 
 dotenv.config();
 const app: Express = express();
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 
 app.post("/signup", async (req: Request, res: Response) => {
     const userPayload = req.body;
