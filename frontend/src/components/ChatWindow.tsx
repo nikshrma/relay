@@ -7,10 +7,10 @@ export default function ChatWindow({messages}: {messages:Message[]}){
 return <div>
     {messages.map((message)=>{
         if(message.senderId!==user?.id){
-            return <div key={message.id}> {message.sender.name}{message.content}</div>
+            return <div key={message.id}> {message.sender.name}{message.content}{message.createdAt}</div>
         }
         else{
-            return <div key={message.id}> You{message.content}</div>
+            return <div key={message.id}> You{message.content}{message.createdAt}</div>
         }
     })}
 </div>
