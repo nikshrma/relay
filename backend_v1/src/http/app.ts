@@ -59,7 +59,11 @@ app.post("/signin", async (req: Request, res: Response) => {
         secure: false,
         sameSite: "lax"
     })
-    return res.status(200).json({ "message": "Signed in" , user });
+    return res.status(200).json({ "message": "Signed in" , user:{
+        name:user.name,
+        number:user.number,
+        id:user.id
+    } });
 
 })
 app.get("/users", authMiddleware, async (req: Request, res: Response) => {
