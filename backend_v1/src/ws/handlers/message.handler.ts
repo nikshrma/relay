@@ -2,7 +2,7 @@ import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import type { IncomingMessage } from "http";
 import { prisma } from "../../lib/db.js";
-import { getUserSocket } from "../store.js";
+import { sockets } from "../store.js";
 
 export interface SendMessagePayload {
     to: string;
@@ -44,14 +44,10 @@ export async function sendMessage(senderId: string, msg: WsMessage) {
 
     await saveMessage(to, senderId, content);
 
-    const receiverSocket = getUserSocket(to);
-    if (receiverSocket) {
-        const sender = await prisma.user.findUnique({ where: { id:senderId }});
-        receiverSocket.send(
-            JSON.stringify({
-                type: "receive_message",
-                payload: { from: senderId, name: sender?.name, content },
-            })
-        );
-    }
+
+    const sender = await prisma.user.findUnique({ where: { id: senderId } });
+    sockets.sendToUser(to,{
+        type: "receive_message",
+        payload: { from: senderId, name: sender?.name, content },
+    })
 }

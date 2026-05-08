@@ -1,7 +1,7 @@
 import { WebSocketServer, type WebSocket } from "ws";
 import type { Server as HttpServer } from "http";
-import { addUser, removeUserSocket } from "./store.js";
 import { extractUserId, sendMessage, type WsMessage } from "./handlers/message.handler.js";
+import { sockets } from "./store.js";
 
 export function initWebSocketServer(server: HttpServer) {
     const wss = new WebSocketServer({ server });
@@ -15,7 +15,7 @@ export function initWebSocketServer(server: HttpServer) {
             return;
         }
 
-        addUser(id, ws);
+        sockets.addUser(id, ws);
 
         ws.on("message", async (data) => {
             try {
@@ -38,7 +38,7 @@ export function initWebSocketServer(server: HttpServer) {
         });
 
         ws.on("close", () => {
-            removeUserSocket(id, ws);
+            sockets.removeUserSocket(id, ws);
         });
     });
 }
