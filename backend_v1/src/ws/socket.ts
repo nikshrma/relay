@@ -17,6 +17,20 @@ export function initWebSocketServer(server: HttpServer) {
 
         sockets.addUser(id, ws);
 
+        ws.send(JSON.stringify({
+            type:"online-users",
+            payload:{
+                users:[...sockets.getOnlineUsers()]
+            }
+        }))
+
+        sockets.broadcast({
+            type: "online",
+            payload: {
+                userId:id
+            }
+        })
+
         ws.on("message", async (data) => {
             try {
                 const msg: WsMessage = JSON.parse(data.toString());
@@ -28,6 +42,7 @@ export function initWebSocketServer(server: HttpServer) {
                         ws.send(JSON.stringify({ type: "ack", payload: { status: "sent" } }));
                         break;
                     }
+
                     default:
                         break;
                 }
@@ -39,6 +54,10 @@ export function initWebSocketServer(server: HttpServer) {
 
         ws.on("close", () => {
             sockets.removeUserSocket(id, ws);
+            sockets.broadcast({
+                type: "offline",
+                payload: { userId: id }
+            });
         });
     });
 }

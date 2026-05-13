@@ -6,9 +6,10 @@ import type { User } from "@/types";
 interface SidebarProps{
     onSelectUser:(user:User)=>void;
     selectedUserId:string;
+    onlineUsers:Set<string>;
 }
 
-export default function Sidebar({onSelectUser, selectedUserId}:SidebarProps){
+export default function Sidebar({onSelectUser, selectedUserId, onlineUsers}:SidebarProps){
     const {user, logout} = useAuth();
 
     return <div className="flex flex-col h-full border-r">
@@ -16,7 +17,7 @@ export default function Sidebar({onSelectUser, selectedUserId}:SidebarProps){
             <h2 className="text-xl font-bold tracking-tight">Relay</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
-            <UserList onSelectUser={onSelectUser} selectedUserId={selectedUserId}/>
+            <UserList onSelectUser={onSelectUser} selectedUserId={selectedUserId} onlineUsers={onlineUsers}/>
         </div>
         <div className="flex items-center gap-3 px-4 py-4 border-t">
             {user && <Avatar name={user.name} size="sm"/>}

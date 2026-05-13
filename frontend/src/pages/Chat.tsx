@@ -16,7 +16,7 @@ export default function Chat(){
     const {user} = useAuth();
     const {messages, isLoading, addMessage} = useMessages(selectedUser?.id || "");
 
-    const {sendMessage} = useWebSocket((msg)=>{
+    const {sendMessage, onlineUsers} = useWebSocket((msg)=>{
         if(selectedUser && msg.senderId === selectedUser.id){
             addMessage(msg);
         }
@@ -35,10 +35,10 @@ export default function Chat(){
         });
     };
 
-    return <AppLayout sidebar={<Sidebar onSelectUser={setSelectedUser} selectedUserId={selectedUser?.id || ""}/>}>
+    return <AppLayout sidebar={<Sidebar onSelectUser={setSelectedUser} selectedUserId={selectedUser?.id || ""} onlineUsers={onlineUsers}/>}>
         {selectedUser ? (
             <div className="flex flex-col h-full">
-                <ChatHeader name={selectedUser.name} number={selectedUser.number}/>
+                <ChatHeader name={selectedUser.name} number={selectedUser.number} isOnline={onlineUsers.has(selectedUser.id)}/>
                 {isLoading ? <LoadingSpinner/> : <ChatWindow messages={messages}/>}
                 <MessageInput onSend={handleSend}/>
             </div>

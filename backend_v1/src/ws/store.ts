@@ -2,7 +2,7 @@ import type WebSocket from "ws";
 class SocketManager {
   private userSocketMap: Map<string, Set<WebSocket>> = new Map();
   private static instance: SocketManager;
-  private constructor() {}
+  private constructor() { }
   public static getInstance() {
     if (!this.instance) {
       this.instance = new SocketManager();
@@ -29,17 +29,29 @@ class SocketManager {
     return this.userSocketMap.get(id);
   }
   sendToUser(id: string, payload: unknown) {
-  const sockets = this.userSocketMap.get(id);
+    const sockets = this.userSocketMap.get(id);
 
-  if (!sockets) return;
+    if (!sockets) return;
 
-  const message = JSON.stringify(payload);
+    const message = JSON.stringify(payload);
 
-  for (const socket of sockets) {
-    if (socket.readyState === socket.OPEN) {
-      socket.send(message);
+    for (const socket of sockets) {
+      if (socket.readyState === socket.OPEN) {
+        socket.send(message);
+      }
     }
   }
-}
+  broadcast(payload: unknown) {
+    const message = JSON.stringify(payload);
+    for (const socketSet of this.userSocketMap.values()) {
+      for (const ws of socketSet) {
+        if (ws.readyState === ws.OPEN)
+          ws.send(message);
+      }
+    }
+  }
+  getOnlineUsers(){
+    return this.userSocketMap.keys();
+  }
 }
 export const sockets = SocketManager.getInstance();

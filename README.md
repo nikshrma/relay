@@ -238,7 +238,7 @@ The composite index on `[senderId, receiverId]` is there because the most common
 The foundation works, but it's not production-grade yet. V1.5 is about making the 1:1 chat feel solid before adding complexity:
 
 - [x] **SocketManager class** — Replace the in-memory Map with a proper class that handles multi-device connections, presence tracking, and broadcast patterns
-- [ ] **Online/offline presence** — Show who's online in real time, powered by WebSocket lifecycle events
+- [x] **Online/offline presence** — Show who's online in real time, powered by WebSocket lifecycle events
 - [ ] **Typing indicators** — "User is typing..." with debounced WebSocket events
 - [ ] **Message delivery status** — Sent → Delivered → Read, with a proper state machine and bidirectional acknowledgments
 - [ ] **Zod validation** — Runtime request validation on all endpoints and WebSocket payloads
