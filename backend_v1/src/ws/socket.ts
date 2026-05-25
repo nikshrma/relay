@@ -1,6 +1,6 @@
 import { WebSocketServer, type WebSocket } from "ws";
 import type { Server as HttpServer } from "http";
-import { extractUserId, sendMessage, type WsMessage } from "./handlers/message.handler.js";
+import { extractUserId, sendMessage, sendStopTyping, sendTyping, type WsMessage } from "./handlers/message.handler.js";
 import { sockets } from "./store.js";
 
 export function initWebSocketServer(server: HttpServer) {
@@ -42,7 +42,14 @@ export function initWebSocketServer(server: HttpServer) {
                         ws.send(JSON.stringify({ type: "ack", payload: { status: "sent" } }));
                         break;
                     }
-
+                    case "typing":{
+                        await sendTyping(id,msg);
+                        break;
+                    }
+                    case "stop_typing":{
+                        await sendStopTyping(id,msg);
+                        break;
+                    }
                     default:
                         break;
                 }

@@ -8,9 +8,10 @@ interface UserListProps{
     onSelectUser:(user:User)=>void;
     selectedUserId:string;
     onlineUsers:Set<string>;
+    typingUsers:Set<string>;
 }
 
-export default function UserList({onSelectUser, selectedUserId, onlineUsers}:UserListProps){
+export default function UserList({onSelectUser, selectedUserId, onlineUsers,typingUsers}:UserListProps){
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -36,6 +37,7 @@ export default function UserList({onSelectUser, selectedUserId, onlineUsers}:Use
         {users.map((user)=>{
             const isSelected = selectedUserId === user.id;
             const isOnline = onlineUsers.has(user.id);
+            const isTyping = typingUsers.has(user.id)
             return <div key={user.id} onClick={()=>onSelectUser(user)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b ${isSelected ? "border-l-2" : ""}`}>
                 <div className="relative shrink-0">
                     <Avatar name={user.name}/>
@@ -43,7 +45,12 @@ export default function UserList({onSelectUser, selectedUserId, onlineUsers}:Use
                 </div>
                 <div className="flex flex-col min-w-0">
                     <span className="font-medium text-sm truncate">{user.name}</span>
-                    <span className="text-xs truncate">{user.number}</span>
+                    {isTyping ? (
+                        <span className="text-xs text-green-500 font-medium italic animate-pulse">typing...</span>
+                    ) : (
+                        <span className="text-xs text-gray-500 truncate">{user.number}</span>
+                    )}
+
                 </div>
             </div>
         })}

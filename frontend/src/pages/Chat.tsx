@@ -11,19 +11,19 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { type User } from "@/types";
 import { useState } from "react";
 
-export default function Chat(){
+export default function Chat() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
-    const {user} = useAuth();
-    const {messages, isLoading, addMessage} = useMessages(selectedUser?.id || "");
+    const { user } = useAuth();
+    const { messages, isLoading, addMessage } = useMessages(selectedUser?.id || "");
 
-    const {sendMessage, onlineUsers} = useWebSocket((msg)=>{
-        if(selectedUser && msg.senderId === selectedUser.id){
+    const { sendMessage, onlineUsers, sendTyping, sendStopTyping, typingUsers } = useWebSocket((msg) => {
+        if (selectedUser && msg.senderId === selectedUser.id) {
             addMessage(msg);
         }
     });
 
-    const handleSend = (content:string)=>{
-        if(!user || !selectedUser) return;
+    const handleSend = (content: string) => {
+        if (!user || !selectedUser) return;
         sendMessage(selectedUser.id, content);
         addMessage({
             id: crypto.randomUUID(),
@@ -31,19 +31,19 @@ export default function Chat(){
             createdAt: new Date().toISOString(),
             senderId: user.id,
             receiverId: selectedUser.id,
-            sender:{id: user.id, name: user.name}
+            sender: { id: user.id, name: user.name }
         });
     };
 
-    return <AppLayout sidebar={<Sidebar onSelectUser={setSelectedUser} selectedUserId={selectedUser?.id || ""} onlineUsers={onlineUsers}/>}>
+    return <AppLayout sidebar={<Sidebar onSelectUser={setSelectedUser} selectedUserId={selectedUser?.id || ""} onlineUsers={onlineUsers} typingUsers={typingUsers} />}>
         {selectedUser ? (
             <div className="flex flex-col h-full">
-                <ChatHeader name={selectedUser.name} number={selectedUser.number} isOnline={onlineUsers.has(selectedUser.id)}/>
-                {isLoading ? <LoadingSpinner/> : <ChatWindow messages={messages}/>}
-                <MessageInput onSend={handleSend}/>
+                <ChatHeader name={selectedUser.name} number={selectedUser.number} isOnline={onlineUsers.has(selectedUser.id)} isTyping={typingUsers.has(selectedUser.id)} />
+                {isLoading ? <LoadingSpinner /> : <ChatWindow messages={messages} isTyping={typingUsers.has(selectedUser.id)} name={selectedUser.name} />}
+                <MessageInput onSend={handleSend} onTyping={() => { sendTyping(selectedUser.id) }} stopTyping={() => sendStopTyping(selectedUser.id)} />
             </div>
         ) : (
-            <EmptyState message="Select a conversation to start chatting"/>
+            <EmptyState message="Select a conversation to start chatting" />
         )}
     </AppLayout>
 }

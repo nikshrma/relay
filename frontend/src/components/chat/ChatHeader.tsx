@@ -4,9 +4,10 @@ interface ChatHeaderProps {
     name: string;
     number: string;
     isOnline: boolean;
+    isTyping: boolean;
 }
 
-export default function ChatHeader({ name, number, isOnline }: ChatHeaderProps) {
+export default function ChatHeader({ name, number, isOnline, isTyping }: ChatHeaderProps) {
     return <div className="flex items-center gap-3 px-6 py-4 border-b">
         <div className="relative shrink-0">
             <Avatar name={name} />
@@ -17,7 +18,14 @@ export default function ChatHeader({ name, number, isOnline }: ChatHeaderProps) 
             <span className="text-sm">{number}</span>
             <span className="text-xs flex items-center gap-1">
                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-400"}`} />
-                {isOnline ? "Online" : "Offline"}
+                {isTyping ? (
+                    <span className="text-green-600 font-medium italic animate-pulse">typing...</span>
+                ) : isOnline ? (
+                    "Online"
+                ) : (
+                    "Offline"
+                )}
+
             </span>
         </div>
     </div>

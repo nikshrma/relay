@@ -239,7 +239,7 @@ The foundation works, but it's not production-grade yet. V1.5 is about making th
 
 - [x] **SocketManager class** — Replace the in-memory Map with a proper class that handles multi-device connections, presence tracking, and broadcast patterns
 - [x] **Online/offline presence** — Show who's online in real time, powered by WebSocket lifecycle events
-- [ ] **Typing indicators (In Progress)** — "User is typing..." with debounced WebSocket events 
+- [x] **Typing indicators** — "User is typing..." with debounced WebSocket events 
 - [ ] **Message delivery status (In Progress)** — Sent → Delivered → Read, with a proper state machine and bidirectional acknowledgments 
 - [ ] **Zod validation (In Progress)** — Runtime request validation on all endpoints and WebSocket payloads 
 - [ ] **Cursor-based pagination** — Load message history in chunks instead of all at once

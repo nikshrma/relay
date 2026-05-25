@@ -2,8 +2,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Message } from "@/types";
 import MessageBubble from "./MessageBubble";
 import { useEffect, useRef } from "react";
+import Avatar from "../ui/Avatar";
 
-export default function ChatWindow({messages}:{messages:Message[]}){
+interface ChatWindowProps {
+    messages: Message[];
+    isTyping: boolean;
+    name: string;
+}
+
+export default function ChatWindow({messages , isTyping, name}:ChatWindowProps){
     const {user} = useAuth();
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -19,6 +26,17 @@ export default function ChatWindow({messages}:{messages:Message[]}){
                 isOwn={message.senderId === user?.id}
             />
         ))}
+        {isTyping && (
+            <div className="flex items-end gap-2 flex-row">
+                <Avatar name={name} size="sm" />
+                <div className="max-w-[70%] rounded-2xl px-4 py-3 border rounded-bl-sm bg-gray-50 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" />
+                </div>
+            </div>
+        )}
+
         <div ref={bottomRef}/>
     </div>
 }

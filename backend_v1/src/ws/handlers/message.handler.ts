@@ -4,15 +4,29 @@ import type { IncomingMessage } from "http";
 import { prisma } from "../../lib/db.js";
 import { sockets } from "../store.js";
 
-export interface SendMessagePayload {
-    to: string;
-    content: string;
+interface BasePayload {
+    to:string;
 }
 
-export interface WsMessage {
-    type: string;
-    payload: SendMessagePayload;
+interface MessagePayload extends BasePayload{
+    content:string;
 }
+
+interface TypingPayload extends BasePayload {}
+
+export type WsMessage =
+    | {
+          type: "send_message";
+          payload: MessagePayload;
+      }
+    | {
+          type: "typing";
+          payload: TypingPayload;
+      }
+    | {
+          type: "stop_typing";
+          payload: TypingPayload;
+      };
 
 export function extractUserId(req: IncomingMessage): string | null {
     const cookies = cookie.parse(req.headers.cookie ?? "");
@@ -36,7 +50,7 @@ async function saveMessage(to: string, from: string, content: string) {
     });
 }
 
-export async function sendMessage(senderId: string, msg: WsMessage) {
+export async function sendMessage(senderId: string, msg: Extract<WsMessage , {type:"send_message"}>) {
     const { to, content } = msg.payload;
     if (!to || !content) {
         throw new Error("Missing required fields: 'to' and 'content'");
@@ -49,5 +63,25 @@ export async function sendMessage(senderId: string, msg: WsMessage) {
     sockets.sendToUser(to,{
         type: "receive_message",
         payload: { from: senderId, name: sender?.name, content },
+    })
+}
+export async function sendTyping(senderId:string , msg:Extract<WsMessage , {type:"typing"}>){
+    const {to} = msg.payload;
+    if(!to){
+        throw new Error("Missing field: to")
+    }
+    sockets.sendToUser(to , {
+        type:"typing",
+        payload:{userId:senderId}
+    })
+}
+export async function sendStopTyping(senderId:string , msg:Extract<WsMessage , {type:"stop_typing"}>){
+    const {to} = msg.payload;
+    if(!to){
+        throw new Error("Missing field: to")
+    }
+    sockets.sendToUser(to , {
+        type:"stop_typing",
+        payload:{userId:senderId}
     })
 }
