@@ -19,6 +19,8 @@ export interface Message {
     id: string;
     senderId: string;
     receiverId: string;
+    deliveredAt?: string | null;
+    readAt?: string | null;
     sender:{
         id:string;
         name:string;
