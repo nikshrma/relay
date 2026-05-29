@@ -10,6 +10,7 @@ interface BasePayload {
 
 interface MessagePayload extends BasePayload {
   content: string;
+  id: string;
 }
 
 interface TypingPayload extends BasePayload {}
@@ -44,9 +45,14 @@ export function extractUserId(req: IncomingMessage): string | null {
   }
 }
 
-async function saveMessage(to: string, from: string, content: string) {
+async function saveMessage(
+  to: string,
+  from: string,
+  content: string,
+  id: string,
+) {
   return prisma.message.create({
-    data: { senderId: from, receiverId: to, content },
+    data: { senderId: from, receiverId: to, content, id },
   });
 }
 
@@ -59,12 +65,17 @@ export async function sendMessage(
     throw new Error("Missing required fields: 'to' and 'content'");
   }
 
-  await saveMessage(to, senderId, content);
+  await saveMessage(to, senderId, content, msg.payload.id);
 
   const sender = await prisma.user.findUnique({ where: { id: senderId } });
   sockets.sendToUser(to, {
     type: "receive_message",
-    payload: { from: senderId, name: sender?.name, content },
+    payload: {
+      from: senderId,
+      name: sender?.name,
+      content,
+      id: msg.payload.id,
+    },
   });
 }
 export async function sendTyping(
@@ -129,4 +140,3 @@ export async function markMessagesAsDelivered(receiverId: string) {
     });
   }
 }
-
