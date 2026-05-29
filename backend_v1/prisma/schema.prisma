@@ -25,11 +25,14 @@ model Message{
   id String @id @default(uuid())
   content String
   createdAt DateTime @default(now())
-
+  
+  deliveredAt DateTime?
+  readAt DateTime?
   receiverId String
   senderId String
 
   sender User @relation("SentMessages",fields: [senderId],references: [id])
   receiver User @relation("ReceivedMessages",fields: [receiverId],references: [id])
   @@index([senderId, receiverId])
+  @@index([receiverId,readAt])
 }
