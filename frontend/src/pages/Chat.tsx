@@ -14,7 +14,7 @@ import { useState } from "react";
 export default function Chat() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { user } = useAuth();
-  const { messages, isLoading, addMessage } = useMessages(
+  const { messages, isLoading, addMessage, markDelivered } = useMessages(
     selectedUser?.id || "",
   );
 
@@ -23,7 +23,7 @@ export default function Chat() {
       if (selectedUser && msg.senderId === selectedUser.id) {
         addMessage(msg);
       }
-    });
+    }, markDelivered);
 
   const handleSend = (content: string) => {
     if (!user || !selectedUser) return;
@@ -81,4 +81,3 @@ export default function Chat() {
     </AppLayout>
   );
 }
-

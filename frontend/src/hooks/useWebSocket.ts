@@ -2,13 +2,18 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import type { Message } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function useWebSocket(onMessage: (msg: Message) => void) {
+export function useWebSocket(
+  onMessage: (msg: Message) => void,
+  onDelivered: (messageIds: string[]) => void,
+) {
   const socketRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
+  const onDeliveredRef = useRef(onDelivered);
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   onMessageRef.current = onMessage;
+  onDeliveredRef.current = onDelivered;
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:3000");
@@ -57,6 +62,10 @@ export function useWebSocket(onMessage: (msg: Message) => void) {
           },
         };
         onMessageRef.current(newMessage);
+      }
+      if (msg.type === "delivered_messages") {
+        onDeliveredRef.current(msg.payload.messageIds);
+        return;
       }
       if (msg.type === "typing") {
         setTypingUsers(
