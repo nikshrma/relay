@@ -9,21 +9,30 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { type User } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Chat() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { user } = useAuth();
-  const { messages, isLoading, addMessage, markDelivered } = useMessages(
-    selectedUser?.id || "",
-  );
+  const { messages, isLoading, addMessage, markRead, markDelivered } =
+    useMessages(selectedUser?.id || "");
 
-  const { sendMessage, onlineUsers, sendTyping, sendStopTyping, typingUsers } =
-    useWebSocket((msg) => {
+  const {
+    sendMessage,
+    onlineUsers,
+    sendTyping,
+    sendStopTyping,
+    typingUsers,
+    sendReadMessages,
+  } = useWebSocket(
+    (msg) => {
       if (selectedUser && msg.senderId === selectedUser.id) {
         addMessage(msg);
       }
-    }, markDelivered);
+    },
+    markDelivered,
+    markRead,
+  );
 
   const handleSend = (content: string) => {
     if (!user || !selectedUser) return;
@@ -38,6 +47,15 @@ export default function Chat() {
       sender: { id: user.id, name: user.name },
     });
   };
+  useEffect(() => {
+    const unReadMessageIds = messages
+      .filter((m) => {
+        return m.senderId === selectedUser?.id && !m.readAt;
+      })
+      .map((m) => m.id);
+    if (!selectedUser || unReadMessageIds.length == 0) return;
+    sendReadMessages(selectedUser.id, unReadMessageIds);
+  }, [messages, selectedUser]);
 
   return (
     <AppLayout

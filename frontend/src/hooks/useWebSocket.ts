@@ -5,15 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useWebSocket(
   onMessage: (msg: Message) => void,
   onDelivered: (messageIds: string[]) => void,
+  onRead: (messageIds: string[]) => void,
 ) {
   const socketRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
   const onDeliveredRef = useRef(onDelivered);
+  const onReadRef = useRef(onRead);
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   onMessageRef.current = onMessage;
   onDeliveredRef.current = onDelivered;
+  onReadRef.current = onRead;
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:3000");
@@ -67,6 +70,10 @@ export function useWebSocket(
         onDeliveredRef.current(msg.payload.messageIds);
         return;
       }
+      if (msg.type === "read_messages") {
+        onReadRef.current(msg.payload.messageIds);
+        return;
+      }
       if (msg.type === "typing") {
         setTypingUsers(
           (prev) => new Set([...prev, msg.payload.userId as string]),
@@ -112,6 +119,20 @@ export function useWebSocket(
       }),
     );
   }, []);
-
-  return { sendMessage, onlineUsers, sendTyping, sendStopTyping, typingUsers };
+  const sendReadMessages = useCallback((to: string, messageIds: string[]) => {
+    socketRef.current?.send(
+      JSON.stringify({
+        type: "read_messages",
+        payload: { to, messageIds },
+      }),
+    );
+  }, []);
+  return {
+    sendMessage,
+    onlineUsers,
+    sendTyping,
+    sendStopTyping,
+    typingUsers,
+    sendReadMessages,
+  };
 }

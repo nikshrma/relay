@@ -27,16 +27,31 @@ export function useMessages(userId: string) {
   };
   const markDelivered = (messageIds: string[]) => {
     const messageIdSet = new Set(messageIds);
+    const timeSlot = new Date().toISOString();
     setMessages((prev) =>
       prev.map((message) => {
         return messageIdSet.has(message.id)
           ? {
               ...message,
-              deliveredAt: message.deliveredAt ?? new Date().toISOString(),
+              deliveredAt: message.deliveredAt ?? timeSlot,
             }
           : message;
       }),
     );
   };
-  return { messages, isLoading, addMessage, markDelivered };
+  const markRead = (messageIds: string[]) => {
+    const timeSlot = new Date().toISOString();
+    const messageIdSet = new Set(messageIds);
+    setMessages((prev) =>
+      prev.map((message) => {
+        return messageIdSet.has(message.id)
+          ? {
+              ...message,
+              readAt: message.readAt ?? timeSlot,
+            }
+          : message;
+      }),
+    );
+  };
+  return { messages, isLoading, addMessage, markDelivered, markRead };
 }
