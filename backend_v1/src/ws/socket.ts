@@ -4,6 +4,7 @@ import {
   extractUserId,
   markMessagesAsDelivered,
   sendMessage,
+  sendReadMessages,
   sendStopTyping,
   sendTyping,
   type WsMessage,
@@ -59,6 +60,10 @@ export function initWebSocketServer(server: HttpServer) {
           }
           case "stop_typing": {
             await sendStopTyping(id, msg);
+            break;
+          }
+          case "read_messages": {
+            await sendReadMessages(id, msg);
             break;
           }
           default:

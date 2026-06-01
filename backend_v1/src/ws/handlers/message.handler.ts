@@ -15,6 +15,10 @@ interface MessagePayload extends BasePayload {
 
 interface TypingPayload extends BasePayload {}
 
+interface ReadMessagesPayload extends BasePayload {
+  messageIds: string[];
+}
+
 export type WsMessage =
   | {
       type: "send_message";
@@ -27,6 +31,10 @@ export type WsMessage =
   | {
       type: "stop_typing";
       payload: TypingPayload;
+    }
+  | {
+      type: "read_messages";
+      payload: ReadMessagesPayload;
     };
 
 export function extractUserId(req: IncomingMessage): string | null {
@@ -50,9 +58,10 @@ async function saveMessage(
   from: string,
   content: string,
   id: string,
+  deliveredAt: Date | null,
 ) {
   return prisma.message.create({
-    data: { senderId: from, receiverId: to, content, id },
+    data: { senderId: from, receiverId: to, content, id, deliveredAt },
   });
 }
 
@@ -64,8 +73,8 @@ export async function sendMessage(
   if (!to || !content) {
     throw new Error("Missing required fields: 'to' and 'content'");
   }
-
-  await saveMessage(to, senderId, content, msg.payload.id);
+  const deliveredAt = sockets.isOnline(to) ? new Date() : null;
+  await saveMessage(to, senderId, content, msg.payload.id, deliveredAt);
 
   const sender = await prisma.user.findUnique({ where: { id: senderId } });
   sockets.sendToUser(to, {
@@ -77,6 +86,14 @@ export async function sendMessage(
       id: msg.payload.id,
     },
   });
+  if (deliveredAt) {
+    sockets.sendToUser(senderId, {
+      type: "delivered_messages",
+      payload: {
+        messageIds: [msg.payload.id],
+      },
+    });
+  }
 }
 export async function sendTyping(
   senderId: string,
@@ -115,13 +132,14 @@ export async function markMessagesAsDelivered(receiverId: string) {
       senderId: true,
     },
   });
+  const time = new Date();
   await prisma.message.updateMany({
     where: {
       receiverId,
       deliveredAt: null,
     },
     data: {
-      deliveredAt: new Date(),
+      deliveredAt: time,
     },
   });
   const senderMessagesMap = new Map<string, string[]>();
@@ -139,4 +157,29 @@ export async function markMessagesAsDelivered(receiverId: string) {
       },
     });
   }
+}
+export async function sendReadMessages(
+  senderId: string,
+  msg: Extract<WsMessage, { type: "read_messages" }>,
+) {
+  const time = new Date();
+  await prisma.message.updateMany({
+    where: {
+      senderId: msg.payload.to,
+      receiverId: senderId,
+      id: {
+        in: msg.payload.messageIds,
+      },
+      readAt: null,
+    },
+    data: {
+      readAt: time,
+    },
+  });
+  sockets.sendToUser(msg.payload.to, {
+    type: "read_messages",
+    payload: {
+      messageIds: msg.payload.messageIds,
+    },
+  });
 }

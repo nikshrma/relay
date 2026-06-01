@@ -55,6 +55,7 @@ export default function Chat() {
       .map((m) => m.id);
     if (!selectedUser || unReadMessageIds.length == 0) return;
     sendReadMessages(selectedUser.id, unReadMessageIds);
+    markRead(unReadMessageIds);
   }, [messages, selectedUser]);
 
   return (

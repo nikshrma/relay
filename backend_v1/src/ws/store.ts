@@ -2,7 +2,7 @@ import type WebSocket from "ws";
 class SocketManager {
   private userSocketMap: Map<string, Set<WebSocket>> = new Map();
   private static instance: SocketManager;
-  private constructor() { }
+  private constructor() {}
   public static getInstance() {
     if (!this.instance) {
       this.instance = new SocketManager();
@@ -28,6 +28,10 @@ class SocketManager {
   getUserSocket(id: string) {
     return this.userSocketMap.get(id);
   }
+  isOnline(id: string) {
+    const a: boolean = this.userSocketMap.has(id) ? true : false;
+    return a;
+  }
   sendToUser(id: string, payload: unknown) {
     const sockets = this.userSocketMap.get(id);
 
@@ -45,12 +49,11 @@ class SocketManager {
     const message = JSON.stringify(payload);
     for (const socketSet of this.userSocketMap.values()) {
       for (const ws of socketSet) {
-        if (ws.readyState === ws.OPEN)
-          ws.send(message);
+        if (ws.readyState === ws.OPEN) ws.send(message);
       }
     }
   }
-  getOnlineUsers(){
+  getOnlineUsers() {
     return this.userSocketMap.keys();
   }
 }
