@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { jwtPayloadSchema } from "../schemas/auth.schema.js";
 
 export default function authMiddleware(req: Request,res: Response,next: NextFunction) {
     const token = req.cookies?.token;
@@ -15,13 +16,14 @@ export default function authMiddleware(req: Request,res: Response,next: NextFunc
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        if (typeof decoded === "string" || !("id" in decoded)) {
+        const parsed = jwtPayloadSchema.safeParse(decoded);
+        if (!parsed.success) {
             return res.status(401).json({
                 message: "Invalid token",
             });
         }
 
-        req.id = decoded.id;
+        req.id = parsed.data.id;
         next();
     } catch (error) {
         return res.status(401).json({

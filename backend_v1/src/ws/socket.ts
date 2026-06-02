@@ -11,8 +11,7 @@ import {
 import { sockets } from "./store.js";
 import {
   WsMessageSchema,
-  type WsMessage,
-} from "../http/schemas/auth.schema.js";
+} from "./schemas/message.schema.js";
 
 export function initWebSocketServer(server: HttpServer) {
   const wss = new WebSocketServer({ server });

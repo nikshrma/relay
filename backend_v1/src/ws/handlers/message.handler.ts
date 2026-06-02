@@ -3,22 +3,8 @@ import jwt from "jsonwebtoken";
 import type { IncomingMessage } from "http";
 import { prisma } from "../../lib/db.js";
 import { sockets } from "../store.js";
-import type { WsMessage } from "../../http/schemas/auth.schema.js";
-
-interface BasePayload {
-  to: string;
-}
-
-interface MessagePayload extends BasePayload {
-  content: string;
-  id: string;
-}
-
-interface TypingPayload extends BasePayload {}
-
-interface ReadMessagesPayload extends BasePayload {
-  messageIds: string[];
-}
+import { jwtPayloadSchema } from "../../http/schemas/auth.schema.js";
+import type { WsMessage } from "../schemas/message.schema.js";
 
 export function extractUserId(req: IncomingMessage): string | null {
   const cookies = cookie.parse(req.headers.cookie ?? "");
@@ -27,10 +13,11 @@ export function extractUserId(req: IncomingMessage): string | null {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    if (!decoded || typeof decoded !== "object" || !("id" in decoded)) {
+    const parsed = jwtPayloadSchema.safeParse(decoded);
+    if (!parsed.success) {
       return null;
     }
-    return decoded.id as string;
+    return parsed.data.id;
   } catch {
     return null;
   }

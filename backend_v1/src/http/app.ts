@@ -12,11 +12,8 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { fetchMessages, fetchUsers } from "./services/app.services.js";
 import cors from "cors";
-import {
-  messageQuerySchema,
-  signinSchema,
-  signupSchema,
-} from "./schemas/auth.schema.js";
+import { signinSchema, signupSchema } from "./schemas/auth.schema.js";
+import { messageQuerySchema } from "./schemas/message.schema.js";
 
 dotenv.config();
 const app: Express = express();
@@ -62,7 +59,14 @@ app.post("/signup", async (req: Request, res: Response) => {
     secure: false,
     sameSite: "lax",
   });
-  return res.status(200).json({ message: "User created", user: createdUser });
+  return res.status(200).json({
+    message: "User created",
+    user: {
+      name: createdUser.name,
+      id: createdUser.id,
+      number: createdUser.number,
+    },
+  });
 });
 app.post("/signin", async (req: Request, res: Response) => {
   const parsed = signinSchema.safeParse(req.body);
@@ -150,4 +154,3 @@ app.get("/me", authMiddleware, async (req: Request, res: Response) => {
 });
 
 export default app;
-
