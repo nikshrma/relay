@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import type { IncomingMessage } from "http";
 import { prisma } from "../../lib/db.js";
 import { sockets } from "../store.js";
+import type { WsMessage } from "../../http/schemas/auth.schema.js";
 
 interface BasePayload {
   to: string;
@@ -18,24 +19,6 @@ interface TypingPayload extends BasePayload {}
 interface ReadMessagesPayload extends BasePayload {
   messageIds: string[];
 }
-
-export type WsMessage =
-  | {
-      type: "send_message";
-      payload: MessagePayload;
-    }
-  | {
-      type: "typing";
-      payload: TypingPayload;
-    }
-  | {
-      type: "stop_typing";
-      payload: TypingPayload;
-    }
-  | {
-      type: "read_messages";
-      payload: ReadMessagesPayload;
-    };
 
 export function extractUserId(req: IncomingMessage): string | null {
   const cookies = cookie.parse(req.headers.cookie ?? "");

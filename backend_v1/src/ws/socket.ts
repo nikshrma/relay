@@ -7,9 +7,12 @@ import {
   sendReadMessages,
   sendStopTyping,
   sendTyping,
-  type WsMessage,
 } from "./handlers/message.handler.js";
 import { sockets } from "./store.js";
+import {
+  WsMessageSchema,
+  type WsMessage,
+} from "../http/schemas/auth.schema.js";
 
 export function initWebSocketServer(server: HttpServer) {
   const wss = new WebSocketServer({ server });
@@ -43,9 +46,9 @@ export function initWebSocketServer(server: HttpServer) {
 
     ws.on("message", async (data) => {
       try {
-        const msg: WsMessage = JSON.parse(data.toString());
-        if (!msg.type) return;
-
+        const parsed = WsMessageSchema.safeParse(JSON.parse(data.toString()));
+        if (!parsed.success) return;
+        const msg = parsed.data;
         switch (msg.type) {
           case "send_message": {
             await sendMessage(id, msg);
