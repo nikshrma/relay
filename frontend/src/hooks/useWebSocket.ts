@@ -2,6 +2,8 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import type { Message } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
+const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:3000";
+
 export function useWebSocket(
   onMessage: (msg: Message) => void,
   onDelivered: (messageIds: string[]) => void,
@@ -24,7 +26,7 @@ export function useWebSocket(
   useEffect(() => {
     shouldReconnectRef.current = true;
     const connect = () => {
-      const socket = new WebSocket("ws://localhost:3000");
+      const socket = new WebSocket(WS_URL);
       socketRef.current = socket;
       socket.onopen = () => {
         reconnectAttemptsRef.current = 0;

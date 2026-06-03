@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: "relay-postgres"
+    ports:
+      - 5432:5432
+    volumes:
+      - relay_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=relay_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d relay_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build:
+      context: ./backend_v1/
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/relay_db
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: http://localhost,http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 3000:3000
+  frontend:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:3000
+        VITE_WS_URL: ws://localhost:3000
+    depends_on:
+      - backend
+    ports:
+      - 80:80
+volumes:
+  relay_db:
