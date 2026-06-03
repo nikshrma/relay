@@ -243,7 +243,7 @@ The foundation works, but it's not production-grade yet. V1.5 is about making th
 - [x] **Message delivery status** — Sent → Delivered → Read, with a proper state machine and bidirectional acknowledgments
 - [x] **Zod validation** — Runtime request validation on all endpoints and WebSocket payloads
 - [ ] ~~**Cursor-based pagination** — Load message history in chunks instead of all at once~~
-- [ ] **WebSocket reconnection** — Auto-reconnect with exponential backoff when the connection drops
+- [x] **WebSocket reconnection** — Auto-reconnect with exponential backoff when the connection drops
 - [ ] **Docker Compose** — One-command setup for the full stack
 
 ### V2 -> Scaling Out
