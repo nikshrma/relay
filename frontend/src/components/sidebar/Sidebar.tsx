@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import UserList from "./UserList";
 import Avatar from "@/components/ui/Avatar";
 import type { User } from "@/types";

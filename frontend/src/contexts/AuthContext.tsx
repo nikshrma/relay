@@ -1,18 +1,8 @@
 import api from "@/services/api";
 import type { SigninPayload, SignupPayload, User } from "@/types";
-import React,{ createContext, useContext, useEffect, useState } from "react";
+import React,{ useEffect, useState } from "react";
+import { AuthContext } from "./auth";
 
-
-interface AuthContextType{
-    user:User | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    signin: (payload: SigninPayload)=>Promise<void>;
-    signup: (payload:SignupPayload)=>Promise<void>
-    logout:()=>void
-}
-
-const AuthContext = createContext< AuthContextType | undefined >(undefined)
 export function AuthProvider({children}:{children: React.ReactNode}){
     const [user , setUser] = useState<User | null>(null);
     const [isLoading , setIsLoading] = useState(true);
@@ -43,12 +33,4 @@ export function AuthProvider({children}:{children: React.ReactNode}){
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth(){
-    const context = useContext(AuthContext);
-    if(!context){
-       throw new Error("useAuth must be used within provider");
-    }
-    return context;
 }

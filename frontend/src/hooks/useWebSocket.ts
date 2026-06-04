@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { Message } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:3000";
 
@@ -19,9 +19,12 @@ export function useWebSocket(
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  onMessageRef.current = onMessage;
-  onDeliveredRef.current = onDelivered;
-  onReadRef.current = onRead;
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+    onDeliveredRef.current = onDelivered;
+    onReadRef.current = onRead;
+  }, [onMessage, onDelivered, onRead]);
 
   useEffect(() => {
     shouldReconnectRef.current = true;

@@ -5,11 +5,20 @@ import Sidebar from "@/components/sidebar/Sidebar";
 import AppLayout from "@/layouts/AppLayout";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useMessages } from "@/hooks/useMessages";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { type User } from "@/types";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+const MESSAGE_PREVIEW_LENGTH = 72;
+
+function getMessagePreview(content: string) {
+  return content.length > MESSAGE_PREVIEW_LENGTH
+    ? `${content.slice(0, MESSAGE_PREVIEW_LENGTH).trim()}...`
+    : content;
+}
 
 export default function Chat() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -28,7 +37,21 @@ export default function Chat() {
     (msg) => {
       if (selectedUser && msg.senderId === selectedUser.id) {
         addMessage(msg);
+        return;
       }
+
+      toast(
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-sm font-semibold truncate">{msg.sender.name}</span>
+          <span className="text-sm text-neutral-600 line-clamp-2 break-words">
+            {getMessagePreview(msg.content)}
+          </span>
+        </div>,
+        {
+          duration: 4000,
+          className: "border rounded-lg shadow-lg",
+        },
+      );
     },
     markDelivered,
     markRead,

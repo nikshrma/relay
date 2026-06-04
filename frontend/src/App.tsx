@@ -1,10 +1,12 @@
 import type React from "react"
-import { AuthProvider, useAuth } from "./contexts/AuthContext"
+import { AuthProvider } from "./contexts/AuthContext"
+import { useAuth } from "./contexts/auth"
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Chat from "./pages/Chat";
 import LandingPage from "./pages/LandingPage";
+import { Toaster } from "sonner";
 
 function ProtectedRoutes({children}:{children: React.ReactNode}){
   const {isAuthenticated, isLoading} = useAuth();
@@ -44,6 +46,7 @@ function App(){
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes/>
+        <Toaster position="top-right" richColors={false} closeButton />
       </AuthProvider>
     </BrowserRouter>
   </>

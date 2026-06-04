@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import type { Message } from "@/types";
 import MessageBubble from "./MessageBubble";
 import { useEffect, useRef } from "react";
