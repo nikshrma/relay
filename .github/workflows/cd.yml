@@ -1,0 +1,32 @@
+name: Build and Push Backend Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and Push the Image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend_v1
+          file: ./backend_v1/Dockerfile
+          push: true
+          tags: |
+            nikshrma/relay-backend:latest
+            nikshrma/relay-backend:${{github.sha}}
