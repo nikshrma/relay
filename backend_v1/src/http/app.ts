@@ -14,6 +14,7 @@ import { fetchMessages, fetchUsers } from "./services/app.services.js";
 import cors from "cors";
 import { signinSchema, signupSchema } from "./schemas/auth.schema.js";
 import { messageQuerySchema } from "./schemas/message.schema.js";
+import { timeStamp } from "node:console";
 
 dotenv.config();
 const app: Express = express();
@@ -21,10 +22,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost", "http://localhost:5173"],
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   }),
 );
+
+const isProd = process.env.NODE_ENV === "production";
 
 app.post("/signup", async (req: Request, res: Response) => {
   const parsed = signupSchema.safeParse(req.body);
@@ -56,8 +59,8 @@ app.post("/signup", async (req: Request, res: Response) => {
   );
   res.cookie("token", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
   });
   return res.status(200).json({
     message: "User created",
@@ -92,8 +95,8 @@ app.post("/signin", async (req: Request, res: Response) => {
   });
   res.cookie("token", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
   });
   return res.status(200).json({
     message: "Signed in",
@@ -137,8 +140,8 @@ app.get("/messages", authMiddleware, async (req: Request, res: Response) => {
 app.post("/logout", async (req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
-    sameSite: "lax",
-    secure: false,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
   });
   return res.json({ message: "Logged out successfully" });
 });
@@ -153,4 +156,11 @@ app.get("/me", authMiddleware, async (req: Request, res: Response) => {
   return res.json({ user });
 });
 
+app.get("/health", (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
 export default app;
