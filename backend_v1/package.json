@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
     "start": "node dist/src/index.js",
+    "db:client": "prisma generate",
     "db:deploy": "pnpm prisma migrate deploy"
   },
   "keywords": [],
