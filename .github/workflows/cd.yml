@@ -30,3 +30,17 @@ jobs:
           tags: |
             nikshrma/relay-backend:latest
             nikshrma/relay-backend:${{github.sha}}
+
+      - name: Verify Pushed Image
+        run: docker pull nikshrma/relay-backend:latest
+
+      - name: Remote SSH and Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME}}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/relay
+            docker compose -f docker-compose.prod.yml pull backend
+            docker compose -f docker-compose.prod.yml up -d backend
