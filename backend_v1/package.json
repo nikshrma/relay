@@ -8,6 +8,7 @@
     "build": "tsc -b",
     "start": "node dist/src/index.js",
     "db:client": "prisma generate",
+    "typecheck": "tsc --noEmit",
     "db:deploy": "pnpm prisma migrate deploy"
   },
   "keywords": [],
