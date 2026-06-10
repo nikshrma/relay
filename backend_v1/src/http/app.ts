@@ -50,7 +50,7 @@ app.post("/signup", async (req: Request, res: Response) => {
       name: userPayload.name.toString(),
     });
   } catch (e) {
-    return res.status(400).json({ message: "Please try again later" });
+    return res.status(500).json({ message: "Please try again later" });
   }
   const token = jwt.sign(
     { id: createdUser.id },
@@ -83,12 +83,12 @@ app.post("/signin", async (req: Request, res: Response) => {
   const user = await checkUserExistance(userPayload.number.toString());
   if (!user) {
     return res
-      .status(400)
+      .status(404)
       .json({ message: "User doesn't exist. Please signup" });
   }
   const a = await signInUser(userPayload, user.password);
   if (!a) {
-    return res.status(403).json({ message: "Invalid password." });
+    return res.status(401).json({ message: "Invalid password." });
   }
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, {
     expiresIn: "1d",
@@ -109,7 +109,7 @@ app.post("/signin", async (req: Request, res: Response) => {
 });
 app.get("/users", authMiddleware, async (req: Request, res: Response) => {
   if (!req.id) {
-    return res.json({ message: "unauthorised" });
+    return res.status(401).json({ message: "unauthorised" });
   }
   try {
     const users = await fetchUsers(req.id);
@@ -120,7 +120,7 @@ app.get("/users", authMiddleware, async (req: Request, res: Response) => {
 });
 app.get("/messages", authMiddleware, async (req: Request, res: Response) => {
   if (!req.id) {
-    return res.json({ message: "unauthorised" });
+    return res.status(401).json({ message: "unauthorised" });
   }
   const parsed = messageQuerySchema.safeParse(req.query);
   if (!parsed.success) {
