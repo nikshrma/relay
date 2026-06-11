@@ -14,7 +14,6 @@ import { fetchMessages, fetchUsers } from "./services/app.services.js";
 import cors from "cors";
 import { signinSchema, signupSchema } from "./schemas/auth.schema.js";
 import { messageQuerySchema } from "./schemas/message.schema.js";
-import { timeStamp } from "node:console";
 
 dotenv.config();
 const app: Express = express();
