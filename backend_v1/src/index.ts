@@ -1,11 +1,6 @@
-import http from "http";
-import app from "./http/app.js";
-import { initWebSocketServer } from "./ws/socket.js";
-export const server = http.createServer(app);
+import { createRelayServer } from "./server.js";
 
-initWebSocketServer(server);
-
+const server = createRelayServer();
 server.listen(process.env.PORT || 3000, () => {
   console.log("Server running on port 3000");
 });
-
