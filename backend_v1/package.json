@@ -10,7 +10,7 @@
     "db:client": "prisma generate",
     "typecheck": "tsc --noEmit",
     "db:deploy": "pnpm prisma migrate deploy",
-    "test": "vitest run",
+    "test": "vitest run --pool forks --maxWorkers=1",
     "test:watch": "vitest"
   },
   "keywords": [],
