@@ -24,13 +24,22 @@ describe("GET /users", () => {
   });
   it("sends back users with auth", async () => {
     const agent = request.agent(app);
-    await agent.post("/signup").send({
+    const phone1 = `${Date.now()}-1`;
+    const phone2 = `${Date.now()}-2`;
+    await request(app).post("/signup").send({
       name: "Nikhil",
-      number: new Date().toString(),
+      number: phone1,
+      password: "11111111",
+    });
+    await agent.post("/signup").send({
+      name: "Rahul",
+      number: phone2,
       password: "11111111",
     });
     const response = await agent.get("/users");
     expect(response.status).toBe(200);
+    expect(response.body.users).toHaveLength(1);
+    expect(response.body.users[0].name).toBe("Nikhil");
   });
 });
 describe("GET /messages", () => {
@@ -87,5 +96,13 @@ describe("GET /messages", () => {
     expect(response.status).toBe(200);
     expect(response.body.messages).toBeDefined();
     expect(Array.isArray(response.body.messages)).toBe(true);
+  });
+});
+describe("GET /health", () => {
+  it("should be healthy", async () => {
+    const response = await request(app).get("/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("ok");
   });
 });
