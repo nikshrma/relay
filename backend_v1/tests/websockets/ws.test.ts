@@ -43,9 +43,9 @@ async function createUser(name: string, prefix: string) {
   }
 
   const id = signup.body.user.id;
-  const cookie = signup.headers["set-cookie"].find((c: string) =>
-    c.startsWith("token="),
-  );
+  const setCookie = signup.headers["set-cookie"];
+  const cookieArray = Array.isArray(setCookie) ? setCookie : (setCookie ? [setCookie] : []);
+  const cookie = cookieArray.find((c: string) => c.startsWith("token="));
 
   return { id, cookie };
 }
