@@ -11,9 +11,6 @@ importers:
       axios:
         specifier: ^1.14.0
         version: 1.14.0
-      dev:e2e:
-        specifier: concurrently "pnpm dev" "cd ../backend_v1 && pnpm dev"
-        version: link:concurrently "pnpm dev" "cd ../backend_v1 && pnpm dev"
       react:
         specifier: ^19.2.4
         version: 19.2.4
