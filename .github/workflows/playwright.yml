@@ -1,0 +1,76 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://user:password@localhost:5432/testdb
+      JWT_SECRET: supersecret
+      CORS_ORIGIN: http://localhost:5173
+      VITE_API_BASE_URL: http://localhost:3000
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: |
+            backend_v1/pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
+
+      - name: Install backend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: backend_v1
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Generate prisma client
+        run: pnpm run db:client
+        working-directory: backend_v1
+
+      - name: Run migrations
+        run: pnpm run db:deploy
+        working-directory: backend_v1
+
+      - name: Install dependencies
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Run Playwright tests
+        run: pnpm run play
+        working-directory: frontend
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
