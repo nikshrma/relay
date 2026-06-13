@@ -62,7 +62,7 @@ jobs:
         working-directory: frontend
 
       - name: Run Playwright tests
-        run: pnpm exec playwright test
+        run: pnpm run play
         working-directory: frontend
 
       - uses: actions/upload-artifact@v4
