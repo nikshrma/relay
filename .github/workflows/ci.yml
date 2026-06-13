@@ -26,6 +26,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://user:password@localhost:5432/testdb
+      JWT_SECRET: supersecret
     steps:
       - uses: actions/checkout@v6
 
