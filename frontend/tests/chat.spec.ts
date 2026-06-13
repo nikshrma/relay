@@ -16,14 +16,17 @@ test("chat works", async ({ browser }) => {
   const number1 = uniqueNumber();
   const number2 = uniqueNumber();
 
-  await signup(pageA, "UserA", number1);
-  await signup(pageB, "UserB", number2);
+  const nameA = `UserA-${number1}`;
+  const nameB = `UserB-${number2}`;
+
+  await signup(pageA, nameA, number1);
+  await signup(pageB, nameB, number2);
   await pageA.reload();
 
-  await sendMessage(pageA, "UserB", "Hi UserB");
+  await sendMessage(pageA, nameB, `Hi ${nameB}`);
 
-  await pageB.locator(".flex-1.overflow-y-auto").getByText("UserA").click();
+  await pageB.locator(".flex-1.overflow-y-auto").getByText(nameA).click();
   await expect(
-    pageB.locator(".flex-1.overflow-y-auto").getByText("Hi UserB"),
+    pageB.locator(".flex-1.overflow-y-auto").getByText(`Hi ${nameB}`),
   ).toBeVisible();
 });

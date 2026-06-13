@@ -13,13 +13,18 @@ test("checks read receipts", async ({ browser }) => {
   const pageA = await userA.newPage();
   const pageB = await userB.newPage();
 
-  await signup(pageA, "UserA", uniqueNumber());
-  await signup(pageB, "UserB", uniqueNumber());
+  const numberA = uniqueNumber();
+  const numberB = uniqueNumber();
+  const nameA = `UserA-${numberA}`;
+  const nameB = `UserB-${numberB}`;
+
+  await signup(pageA, nameA, numberA);
+  await signup(pageB, nameB, numberB);
 
   await pageB.close();
   await pageA.reload();
 
-  await sendMessage(pageA, "UserB", "Checking receipts");
+  await sendMessage(pageA, nameB, "Checking receipts");
   //TODO: maybe add something more durable here to locate the message box like a test ID or something
   const messageBubble = pageA
     .locator("div.border")
@@ -30,13 +35,13 @@ test("checks read receipts", async ({ browser }) => {
   const pageB2 = await userB.newPage();
   await pageB2.goto("/chats");
   await expect(
-    pageB2.locator(".flex-1.overflow-y-auto").getByText("UserA"),
+    pageB2.locator(".flex-1.overflow-y-auto").getByText(nameA),
   ).toBeVisible();
 
   await expect(ticks.locator("polyline")).toHaveCount(2);
   await expect(ticks).toHaveClass(/text-gray-500/);
 
-  await pageB2.locator(".flex-1.overflow-y-auto").getByText("UserA").click();
+  await pageB2.locator(".flex-1.overflow-y-auto").getByText(nameA).click();
   await expect(
     pageB2.locator(".flex-1.overflow-y-auto").getByText("Checking receipts"),
   ).toBeVisible();
