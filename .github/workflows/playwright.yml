@@ -24,6 +24,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://user:password@localhost:5432/testdb
       JWT_SECRET: supersecret
+      CORS_ORIGIN: http://localhost:5173
+      VITE_API_BASE_URL: http://localhost:3000
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
