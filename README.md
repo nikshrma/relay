@@ -20,15 +20,15 @@ The goal was simple: build a full-stack chat app where two people can talk to ea
 
 ## Tech Stack
 
-| Layer         | Tech                                  |
-| ------------- | ------------------------------------- |
-| **Frontend**  | React, TypeScript, Vite, Tailwind CSS |
-| **Backend**   | Node.js, Express 5, TypeScript        |
-| **Database**  | PostgreSQL, Prisma ORM                |
-| **Real-time** | Native `ws` library (no Socket.IO)    |
-| **Auth**      | JWT + httpOnly cookies, bcrypt        |
-| **Validation**| Zod                                   |
-| **Ops**       | Docker, Docker Compose, Nginx         |
+| Layer          | Tech                                  |
+| -------------- | ------------------------------------- |
+| **Frontend**   | React, TypeScript, Vite, Tailwind CSS |
+| **Backend**    | Node.js, Express 5, TypeScript        |
+| **Database**   | PostgreSQL, Prisma ORM                |
+| **Real-time**  | Native `ws` library (no Socket.IO)    |
+| **Auth**       | JWT + httpOnly cookies, bcrypt        |
+| **Validation** | Zod                                   |
+| **Ops**        | Docker, Docker Compose, Nginx         |
 
 ### Why These Choices?
 
@@ -330,6 +330,35 @@ model Message {
 
 The composite index on `[senderId, receiverId]` is there because the most common query is "get all messages between user A and user B" and without it, that query does a full table scan.
 
+## Testing Workflows
+
+To ensure reliability, Relay includes comprehensive testing for both the backend and frontend.
+
+### Backend Integration Tests
+
+The backend uses **Vitest** and **Supertest** for testing REST endpoints and WebSocket behavior against a live test database. These tests ensure that the core messaging logic and database interactions are rock solid.
+
+- Run locally with: `pnpm run test` or `pnpm run test:watch` (inside `backend_v1/`).
+- _Note:_ Tests run sequentially (`--maxWorkers=1`) to prevent database race conditions.
+
+### E2E Testing with Playwright
+
+For the frontend, we use **Playwright** to simulate real user interactions. It tests the whole stack end-to-end, including opening multiple browser contexts simultaneously to verify that real-time WebSocket messaging actually works across different clients.
+
+- Start local testing environment: `pnpm run dev:e2e` (spins up both frontend and backend concurrently). But this command is automatically run due to the setup in the playwright.config.ts whenever pnpm run play is used.
+- Run Playwright tests: `pnpm run play` (headless) or `pnpm run play:headed` (opens browser UI). `pnpm run play --ui` can be used to open a GUI where tests can be run one by one.
+
+## CI/CD Workflows
+
+Relay uses GitHub Actions to automate testing and deployments, ensuring new changes never break existing functionality.
+
+- **CI Pipeline** (`ci.yml`): Runs on pull requests to the main branch. It spins up a PostgreSQL service container, builds the backend, runs Prisma migrations, and executes the backend integration tests.
+- **Playwright Pipeline** (`playwright.yml`): Runs on pushes and pull requests. It provisions a full environment (Postgres, Backend, Frontend), runs the Playwright E2E suite, and automatically uploads the test report as a GitHub artifact.
+- **CD Pipeline** (`cd.yml`): Handles automated deployments to production whenever code is pushed to the `main` branch.
+  - **Build & Push**: It first builds the backend Docker image and pushes it to Docker Hub, tagged with the commit SHA and `latest`.
+  - **Remote SSH Deploy**: Once the image is verified, the action connects to the production server via SSH. It navigates to the project directory, pulls the newly built Docker image (`docker compose pull`), and restarts the backend container seamlessly in detached mode.
+  - **Frontend Deploy**: The frontend is managed via Cloudflare Pages, which automatically rebuilds and deploys the static Vite application.
+
 ## Roadmap
 
 ### V1.5 -> Hardening the Core
@@ -344,6 +373,12 @@ The foundation works, but it's not production-grade yet. V1.5 is about making th
 - [ ] ~~**Cursor-based pagination** — Load message history in chunks instead of all at once~~
 - [x] **WebSocket reconnection** — Auto-reconnect with exponential backoff when the connection drops
 - [x] **Docker Compose** — One-command setup for the full stack
+
+### Testing & Deployment (Between V1.5 and V2)
+
+- [x] **Integration Tests** — Build a comprehensive test suite for the backend APIs and WebSocket server.
+- [x] **E2E Tests** — Setup Playwright workflows for full end-to-end testing.
+- [x] **CI/CD Workflows** — Automate testing and deployment pipelines.
 
 ### V2 -> Scaling Out
 
