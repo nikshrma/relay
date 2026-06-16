@@ -14,6 +14,7 @@ import { fetchMessages, fetchUsers } from "./services/app.services.js";
 import cors from "cors";
 import { signinSchema, signupSchema } from "./schemas/auth.schema.js";
 import { messageQuerySchema } from "./schemas/message.schema.js";
+import { groupRouter } from "./routes/groups.js";
 
 dotenv.config();
 const app: Express = express();
@@ -162,4 +163,6 @@ app.get("/health", (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use("/groups", groupRouter);
 export default app;

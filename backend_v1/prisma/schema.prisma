@@ -21,7 +21,7 @@ model User{
   sentMessages Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
 
-  groups GroupMembers[]
+  groups GroupMember[]
   groupMessages GroupMessage[] @relation("GroupMessageSender")
 }
 model Message{
@@ -58,11 +58,11 @@ model Group{
   name String
 
   createdAt DateTime @default(now())
-    
-  members GroupMembers[]
+
+  members GroupMember[]
   messages GroupMessage[]
 }
-model GroupMembers{
+model GroupMember{
   id String @id @default(uuid())
   userId String
   groupId String
