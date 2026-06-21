@@ -1,5 +1,10 @@
 import { prisma } from "../../backend_v1/src/lib/db";
 export async function clearDatabase() {
-  await prisma.message.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.$transaction([
+    prisma.groupMember.deleteMany(),
+    prisma.groupMessage.deleteMany(),
+    prisma.group.deleteMany(),
+    prisma.message.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
 }
