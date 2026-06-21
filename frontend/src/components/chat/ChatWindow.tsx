@@ -8,9 +8,10 @@ interface ChatWindowProps {
     messages: Message[];
     isTyping: boolean;
     name: string;
+    isGroup?: boolean;
 }
 
-export default function ChatWindow({messages , isTyping, name}:ChatWindowProps){
+export default function ChatWindow({messages , isTyping, name, isGroup}:ChatWindowProps){
     const {user} = useAuth();
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +25,7 @@ export default function ChatWindow({messages , isTyping, name}:ChatWindowProps){
                 key={message.id}
                 message={message}
                 isOwn={message.senderId === user?.id}
+                isGroup={isGroup}
             />
         ))}
         {isTyping && (

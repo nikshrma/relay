@@ -3,15 +3,16 @@ import type { Server as HttpServer } from "http";
 import {
   extractUserId,
   markMessagesAsDelivered,
+  sendGroupMessage,
+  sendGroupStopTyping,
+  sendGroupTyping,
   sendMessage,
   sendReadMessages,
   sendStopTyping,
   sendTyping,
 } from "./handlers/message.handler.js";
 import { sockets } from "./store.js";
-import {
-  WsMessageSchema,
-} from "./schemas/message.schema.js";
+import { WsMessageSchema } from "./schemas/message.schema.js";
 
 export function initWebSocketServer(server: HttpServer) {
   const wss = new WebSocketServer({ server });
@@ -66,6 +67,18 @@ export function initWebSocketServer(server: HttpServer) {
           }
           case "read_messages": {
             await sendReadMessages(id, msg);
+            break;
+          }
+          case "send_group_message": {
+            await sendGroupMessage(id, msg);
+            break;
+          }
+          case "group_typing": {
+            await sendGroupTyping(id, msg);
+            break;
+          }
+          case "group_stop_typing": {
+            await sendGroupStopTyping(id, msg);
             break;
           }
           default:

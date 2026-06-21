@@ -16,6 +16,20 @@ const typingSchema = z.object({
   }),
 });
 
+const groupTypingSchema = z.object({
+  type: z.literal("group_typing"),
+  payload: z.object({
+    groupId: z.uuid(),
+  }),
+});
+
+const groupStopTypingSchema = z.object({
+  type: z.literal("group_stop_typing"),
+  payload: z.object({
+    groupId: z.uuid(),
+  }),
+});
+
 const stopTypingSchema = z.object({
   type: z.literal("stop_typing"),
   payload: z.object({
@@ -31,10 +45,21 @@ const readMessagesSchema = z.object({
   }),
 });
 
+const sendGroupMessageSchema = z.object({
+  type: z.literal("send_group_message"),
+  payload: z.object({
+    groupId: z.uuid(),
+    content: z.string().trim().min(1),
+    id: z.uuid(),
+  }),
+});
 export const WsMessageSchema = z.discriminatedUnion("type", [
   sendMessageSchema,
   typingSchema,
   stopTypingSchema,
   readMessagesSchema,
+  sendGroupMessageSchema,
+  groupTypingSchema,
+  groupStopTypingSchema,
 ]);
 export type WsMessage = z.infer<typeof WsMessageSchema>;

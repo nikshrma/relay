@@ -5,6 +5,11 @@ import { prisma } from "../../lib/db.js";
 import { sockets } from "../store.js";
 import { jwtPayloadSchema } from "../../http/schemas/auth.schema.js";
 import type { WsMessage } from "../schemas/message.schema.js";
+import {
+  checkUserPresenceInGroup,
+  getGroupDetails,
+} from "../../http/services/group.services.js";
+import { group } from "console";
 
 export function extractUserId(req: IncomingMessage): string | null {
   const cookies = cookie.parse(req.headers.cookie ?? "");
@@ -152,4 +157,91 @@ export async function sendReadMessages(
       messageIds: msg.payload.messageIds,
     },
   });
+}
+export async function sendGroupMessage(
+  senderId: string,
+  msg: Extract<WsMessage, { type: "send_group_message" }>,
+) {
+  const { groupId, content, id } = msg.payload;
+  const userId = await checkUserPresenceInGroup(groupId, [senderId]);
+  if (!userId) {
+    throw new Error("You are not a member of this group");
+  }
+  const savedMessage = await prisma.groupMessage.create({
+    data: {
+      id,
+      content,
+      groupId,
+      senderId,
+    },
+    include: {
+      sender: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+  const groupDetails = await getGroupDetails(groupId);
+  if (!groupDetails) return;
+
+  for (const member of groupDetails.members) {
+    if (member.userId !== senderId) {
+      sockets.sendToUser(member.userId, {
+        type: "receive_group_message",
+        payload: {
+          groupId,
+          groupName: groupDetails.name,
+          from: senderId,
+          name: savedMessage.sender.name,
+          content,
+          id,
+          createdAt: savedMessage.createdAt,
+        },
+      });
+    }
+  }
+}
+export async function sendGroupTyping(
+  senderId: string,
+  msg: Extract<WsMessage, { type: "group_typing" }>,
+) {
+  const { groupId } = msg.payload;
+
+  const isMember = await checkUserPresenceInGroup(groupId, [senderId]);
+  if (!isMember) return;
+
+  const groupDetails = await getGroupDetails(groupId);
+  if (!groupDetails) return;
+
+  for (const member of groupDetails.members) {
+    if (member.userId !== senderId) {
+      sockets.sendToUser(member.userId, {
+        type: "group_typing",
+        payload: { groupId, userId: senderId },
+      });
+    }
+  }
+}
+
+export async function sendGroupStopTyping(
+  senderId: string,
+  msg: Extract<WsMessage, { type: "group_stop_typing" }>,
+) {
+  const { groupId } = msg.payload;
+
+  const isMember = await checkUserPresenceInGroup(groupId, [senderId]);
+  if (!isMember) return;
+
+  const groupDetails = await getGroupDetails(groupId);
+  if (!groupDetails) return;
+
+  for (const member of groupDetails.members) {
+    if (member.userId !== senderId) {
+      sockets.sendToUser(member.userId, {
+        type: "group_stop_typing",
+        payload: { groupId, userId: senderId },
+      });
+    }
+  }
 }

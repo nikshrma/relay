@@ -39,4 +39,3 @@ export async function fetchMe(userId: string) {
   });
   return user;
 }
-
