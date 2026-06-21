@@ -62,7 +62,7 @@ describe("Group Routes API", () => {
       const response1 = await user1.agent.get("/groups");
       expect(response1.status).toBe(200);
       expect(response1.body.groups).toHaveLength(1);
-      expect(response1.body.groups[0].name).toBe("My Group");
+      expect(response1.body.groups[0]?.name).toBe("My Group");
 
       const response2 = await user2.agent.get("/groups");
       expect(response2.status).toBe(200);
@@ -104,7 +104,7 @@ describe("Group Routes API", () => {
 
       const dbMembers = await prisma.groupMember.findMany({ where: { groupId } });
       expect(dbMembers).toHaveLength(1);
-      expect(dbMembers[0].userId).toBe(user1.id);
+      expect(dbMembers[0]?.userId).toBe(user1.id);
     });
 
     it("allows user to leave group", async () => {
@@ -140,7 +140,7 @@ describe("Group Routes API", () => {
       const response = await user2.agent.get(`/groups/${groupId}/messages`);
       expect(response.status).toBe(200);
       expect(response.body.messages).toHaveLength(1);
-      expect(response.body.messages[0].content).toBe("Hello group");
+      expect(response.body.messages[0]?.content).toBe("Hello group");
     });
 
     it("prevents non-members from fetching messages", async () => {
