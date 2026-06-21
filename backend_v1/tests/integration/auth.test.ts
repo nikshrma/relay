@@ -4,6 +4,9 @@ import { prisma } from "../../src/lib/db.js";
 
 beforeEach(async () => {
   await prisma.$transaction([
+    prisma.groupMember.deleteMany(),
+    prisma.groupMessage.deleteMany(),
+    prisma.group.deleteMany(),
     prisma.message.deleteMany(),
     prisma.user.deleteMany(),
   ]);

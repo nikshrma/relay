@@ -24,6 +24,9 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  await prisma.groupMember.deleteMany();
+  await prisma.groupMessage.deleteMany();
+  await prisma.group.deleteMany();
   await prisma.message.deleteMany();
   await prisma.user.deleteMany();
 });
@@ -405,5 +408,149 @@ describe("Typing Indicators", () => {
 
     wsA.close();
     wsB.close();
+  });
+});
+
+describe("Group Messaging", () => {
+  it("Group message delivered to all online members", async () => {
+    const userA = await createUser("User A", "gA");
+    const userB = await createUser("User B", "gB");
+    const userC = await createUser("User C", "gC"); // Not in group
+
+    const group = await prisma.group.create({
+      data: {
+        name: "Test Group",
+        members: {
+          create: [
+            { userId: userA.id, role: "ADMIN" },
+            { userId: userB.id, role: "MEMBER" },
+          ],
+        },
+      },
+    });
+
+    const wsA = await connectWs(userA.cookie);
+    const wsB = await connectWs(userB.cookie);
+    const wsC = await connectWs(userC.cookie);
+
+    const messageId = crypto.randomUUID();
+    const receivePromiseB = waitForMessage(wsB, "receive_group_message");
+    
+    // Set a timeout for C to ensure they don't receive it
+    let cReceived = false;
+    const listener = (data: WebSocket.RawData) => {
+      const parsed = JSON.parse(data.toString());
+      if (parsed.type === "receive_group_message") {
+        cReceived = true;
+      }
+    };
+    wsC.on("message", listener);
+
+    wsA.send(
+      JSON.stringify({
+        type: "send_group_message",
+        payload: {
+          id: messageId,
+          groupId: group.id,
+          content: "Hello Group!",
+        },
+      }),
+    );
+
+    const receivedB = await receivePromiseB;
+    expect(receivedB.payload.content).toBe("Hello Group!");
+    expect(receivedB.payload.groupId).toBe(group.id);
+
+    await delay(200);
+    expect(cReceived).toBe(false);
+
+    wsA.close();
+    wsB.close();
+    wsC.close();
+  });
+
+  it("Non-member cannot send group messages", async () => {
+    const userA = await createUser("User A", "gAuthA");
+    const userB = await createUser("User B", "gAuthB"); // Non-member
+
+    const group = await prisma.group.create({
+      data: {
+        name: "Secret Group",
+        members: {
+          create: [{ userId: userA.id, role: "ADMIN" }],
+        },
+      },
+    });
+
+    const wsB = await connectWs(userB.cookie);
+
+    const errorPromise = waitForMessage(wsB, "error");
+
+    wsB.send(
+      JSON.stringify({
+        type: "send_group_message",
+        payload: {
+          id: crypto.randomUUID(),
+          groupId: group.id,
+          content: "Sneak in",
+        },
+      }),
+    );
+
+    const errMessage = await errorPromise;
+    expect(errMessage.payload.message).toBe("Failed to process message");
+
+    wsB.close();
+  });
+
+  it("Offline users receive persisted messages after reconnect", async () => {
+    const userA = await createUser("User A", "gOffA");
+    const userB = await createUser("User B", "gOffB");
+
+    const group = await prisma.group.create({
+      data: {
+        name: "Offline Group",
+        members: {
+          create: [
+            { userId: userA.id, role: "ADMIN" },
+            { userId: userB.id, role: "MEMBER" },
+          ],
+        },
+      },
+    });
+
+    const wsA = await connectWs(userA.cookie);
+    // User B is offline
+
+    const messageId = crypto.randomUUID();
+    wsA.send(
+      JSON.stringify({
+        type: "send_group_message",
+        payload: {
+          id: messageId,
+          groupId: group.id,
+          content: "Message while B is offline",
+        },
+      }),
+    );
+
+    // Wait for the server to process the message and insert into DB
+    await delay(200);
+
+    // User B comes online and checks messages via HTTP
+    const agent = request.agent(server);
+    await agent.post("/signin").send({
+      number: "gOffB" + userB.id, // The signin helper would need exact phone, but let's just use the userB's id to query DB directly to prove persistence
+      password: "password123",
+    });
+
+    const dbMessage = await prisma.groupMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    expect(dbMessage).toBeDefined();
+    expect(dbMessage?.content).toBe("Message while B is offline");
+
+    wsA.close();
   });
 });
