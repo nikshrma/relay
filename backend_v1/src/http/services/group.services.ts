@@ -51,6 +51,9 @@ export async function getGroups(userId: string) {
         },
       },
     },
+    include: {
+      members: true,
+    },
   });
   return groups;
 }
