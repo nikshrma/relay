@@ -2,17 +2,22 @@ import { useState, useEffect } from "react";
 import api from "@/services/api";
 import type { Message } from "@/types";
 
-export function useMessages(userId: string) {
+export function useMessages(conversationId: string, type: 'user' | 'group') {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!conversationId) return;
     const load = async () => {
       setIsLoading(true);
       try {
-        const data = await api.getMessages(userId);
-        setMessages(data);
+        if (type === 'user') {
+            const data = await api.getMessages(conversationId);
+            setMessages(data);
+        } else if (type === 'group') {
+            const data = await api.getGroupMessages(conversationId);
+            setMessages(data);
+        }
       } catch (e) {
         console.error("Failed to load messages", e);
       } finally {
@@ -20,7 +25,7 @@ export function useMessages(userId: string) {
       }
     };
     load();
-  }, [userId]);
+  }, [conversationId, type]);
 
   const addMessage = (msg: Message) => {
     setMessages((prev) => [...prev, msg]);

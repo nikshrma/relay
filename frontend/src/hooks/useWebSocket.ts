@@ -78,6 +78,23 @@ export function useWebSocket(
           };
           onMessageRef.current(newMessage);
         }
+
+        if (msg.type === "receive_group_message") {
+          const { from, content, name, id, groupId, groupName } = msg.payload;
+          const newMessage: any = {
+            id,
+            content,
+            createdAt: new Date().toISOString(),
+            senderId: from,
+            groupId,
+            groupName,
+            sender: {
+              id: from,
+              name,
+            },
+          };
+          onMessageRef.current(newMessage);
+        }
         if (msg.type === "delivered_messages") {
           onDeliveredRef.current(msg.payload.messageIds);
           return;
@@ -92,10 +109,24 @@ export function useWebSocket(
           );
           return;
         }
+        if (msg.type === "group_typing") {
+          setTypingUsers(
+            (prev) => new Set([...prev, msg.payload.groupId as string]),
+          );
+          return;
+        }
         if (msg.type === "stop_typing") {
           setTypingUsers((prev) => {
             const next = new Set(prev);
             next.delete(msg.payload.userId as string);
+            return next;
+          });
+          return;
+        }
+        if (msg.type === "group_stop_typing") {
+          setTypingUsers((prev) => {
+            const next = new Set(prev);
+            next.delete(msg.payload.groupId as string);
             return next;
           });
           return;
@@ -124,33 +155,63 @@ export function useWebSocket(
     };
   }, [user]);
 
-  const sendMessage = useCallback((to: string, content: string, id: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN)
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "send_message",
-          payload: { to, content, id },
-        }),
-      );
+  const sendMessage = useCallback((to: string | undefined, content: string, id: string, groupId?: string) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      if (groupId) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "send_group_message",
+            payload: { groupId, content, id },
+          }),
+        );
+      } else if (to) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "send_message",
+            payload: { to, content, id },
+          }),
+        );
+      }
+    }
   }, []);
 
-  const sendTyping = useCallback((to: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN)
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "typing",
-          payload: { to },
-        }),
-      );
+  const sendTyping = useCallback((to?: string, groupId?: string) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      if (groupId) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "group_typing",
+            payload: { groupId },
+          }),
+        );
+      } else if (to) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "typing",
+            payload: { to },
+          }),
+        );
+      }
+    }
   }, []);
-  const sendStopTyping = useCallback((to: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN)
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "stop_typing",
-          payload: { to },
-        }),
-      );
+  const sendStopTyping = useCallback((to?: string, groupId?: string) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      if (groupId) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "group_stop_typing",
+            payload: { groupId },
+          }),
+        );
+      } else if (to) {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "stop_typing",
+            payload: { to },
+          }),
+        );
+      }
+    }
   }, []);
   const sendReadMessages = useCallback((to: string, messageIds: string[]) => {
     if (socketRef.current?.readyState === WebSocket.OPEN)
