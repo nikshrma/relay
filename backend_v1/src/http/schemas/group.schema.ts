@@ -6,3 +6,7 @@ export const createGroupSchema = z.object({
 });
 export type CreateGroupPayload = z.infer<typeof createGroupSchema>;
 export const groupIdSchema = z.uuid();
+export const addMembersSchema = z.array(z.uuid());
+export type AddMembersPayload = z.infer<typeof addMembersSchema>;
+export const userIdScehma = z.array(z.uuid());
+export const roleSchema = z.enum(["ADMIN", "MEMBER"]);
