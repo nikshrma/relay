@@ -22,6 +22,19 @@ await connectRedis();
 export const MESSAGE_CHANNEL = "message";
 export const PRESENCE_CHANNEL = "presence";
 
+export async function closeRedis() {
+  // Suppress any pending errors on clients during teardown
+  const noop = () => {};
+  subscriber.on("error", noop);
+  publisher.on("error", noop);
+  redis.on("error", noop);
+
+  try { await subscriber.unsubscribe(); } catch {}
+  try { await subscriber.quit(); } catch {}
+  try { await publisher.quit(); } catch {}
+  try { await redis.quit(); } catch {}
+}
+
 export async function initializeSubscriptions() {
   await subscriber.subscribe(MESSAGE_CHANNEL, (payload) => {
     try {

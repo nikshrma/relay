@@ -32,7 +32,6 @@ class SocketManager {
 
   sendToUserLocal(id: string, payload: unknown) {
     const sockets = this.userSocketMap.get(id);
-
     if (!sockets) return;
 
     const message = JSON.stringify(payload);
