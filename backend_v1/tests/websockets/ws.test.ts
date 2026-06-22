@@ -3,12 +3,13 @@ import request from "supertest";
 import crypto from "crypto";
 import { createRelayServer } from "../../src/server.js";
 import { prisma } from "../../src/lib/db.js";
+import { redis, closeRedis } from "../../src/lib/redis.js";
 
 let server: any;
 let wsPort: number;
 
 beforeAll(async () => {
-  server = createRelayServer();
+  server = await createRelayServer();
   await new Promise<void>((resolve) => {
     server.listen(0, () => {
       wsPort = server.address().port;
@@ -18,12 +19,18 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  server.closeAllConnections();
   await new Promise<void>((resolve) => {
     server.close(() => resolve());
   });
+  await closeRedis();
 });
 
 beforeEach(async () => {
+  const presenceKeys = await redis.keys("presence:*");
+  if (presenceKeys.length > 0) await redis.del(presenceKeys);
+  await redis.del("online_users");
+
   await prisma.groupMember.deleteMany();
   await prisma.groupMessage.deleteMany();
   await prisma.group.deleteMany();
@@ -47,7 +54,11 @@ async function createUser(name: string, prefix: string) {
 
   const id = signup.body.user.id;
   const setCookie = signup.headers["set-cookie"];
-  const cookieArray = Array.isArray(setCookie) ? setCookie : (setCookie ? [setCookie] : []);
+  const cookieArray = Array.isArray(setCookie)
+    ? setCookie
+    : setCookie
+      ? [setCookie]
+      : [];
   const cookie = cookieArray.find((c: string) => c.startsWith("token="));
 
   return { id, cookie };
@@ -435,7 +446,7 @@ describe("Group Messaging", () => {
 
     const messageId = crypto.randomUUID();
     const receivePromiseB = waitForMessage(wsB, "receive_group_message");
-    
+
     // Set a timeout for C to ensure they don't receive it
     let cReceived = false;
     const listener = (data: WebSocket.RawData) => {

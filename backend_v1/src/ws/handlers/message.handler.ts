@@ -2,14 +2,14 @@ import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import type { IncomingMessage } from "http";
 import { prisma } from "../../lib/db.js";
-import { sockets } from "../store.js";
 import { jwtPayloadSchema } from "../../http/schemas/auth.schema.js";
 import type { WsMessage } from "../schemas/message.schema.js";
 import {
   checkUserPresenceInGroup,
   getGroupDetails,
 } from "../../http/services/group.services.js";
-import { group } from "console";
+import { pubsub } from "../../services/pubsub.service.js";
+import { presence } from "../../services/presence.service.js";
 
 export function extractUserId(req: IncomingMessage): string | null {
   const cookies = cookie.parse(req.headers.cookie ?? "");
@@ -48,24 +48,30 @@ export async function sendMessage(
   if (!to || !content) {
     throw new Error("Missing required fields: 'to' and 'content'");
   }
-  const deliveredAt = sockets.isOnline(to) ? new Date() : null;
+  const deliveredAt = (await presence.isOnline(to)) ? new Date() : null;
   await saveMessage(to, senderId, content, msg.payload.id, deliveredAt);
 
   const sender = await prisma.user.findUnique({ where: { id: senderId } });
-  sockets.sendToUser(to, {
-    type: "receive_message",
+  await pubsub.publishMessage({
+    userId: to,
     payload: {
-      from: senderId,
-      name: sender?.name,
-      content,
-      id: msg.payload.id,
+      type: "receive_message",
+      payload: {
+        from: senderId,
+        name: sender?.name,
+        content,
+        id: msg.payload.id,
+      },
     },
   });
   if (deliveredAt) {
-    sockets.sendToUser(senderId, {
-      type: "delivered_messages",
+    await pubsub.publishMessage({
+      userId: senderId,
       payload: {
-        messageIds: [msg.payload.id],
+        type: "delivered_messages",
+        payload: {
+          messageIds: [msg.payload.id],
+        },
       },
     });
   }
@@ -78,9 +84,12 @@ export async function sendTyping(
   if (!to) {
     throw new Error("Missing field: to");
   }
-  sockets.sendToUser(to, {
-    type: "typing",
-    payload: { userId: senderId },
+  await pubsub.publishMessage({
+    userId: to,
+    payload: {
+      type: "typing",
+      payload: { userId: senderId },
+    },
   });
 }
 export async function sendStopTyping(
@@ -91,9 +100,12 @@ export async function sendStopTyping(
   if (!to) {
     throw new Error("Missing field: to");
   }
-  sockets.sendToUser(to, {
-    type: "stop_typing",
-    payload: { userId: senderId },
+  await pubsub.publishMessage({
+    userId: to,
+    payload: {
+      type: "stop_typing",
+      payload: { userId: senderId },
+    },
   });
 }
 export async function markMessagesAsDelivered(receiverId: string) {
@@ -125,10 +137,13 @@ export async function markMessagesAsDelivered(receiverId: string) {
     senderMessagesMap.set(msg.senderId, msgIds);
   }
   for (const [senderId, messageIds] of senderMessagesMap) {
-    sockets.sendToUser(senderId, {
-      type: "delivered_messages",
+    await pubsub.publishMessage({
+      userId: senderId,
       payload: {
-        messageIds: messageIds,
+        type: "delivered_messages",
+        payload: {
+          messageIds: messageIds,
+        },
       },
     });
   }
@@ -151,10 +166,13 @@ export async function sendReadMessages(
       readAt: time,
     },
   });
-  sockets.sendToUser(msg.payload.to, {
-    type: "read_messages",
+  await pubsub.publishMessage({
+    userId: msg.payload.to,
     payload: {
-      messageIds: msg.payload.messageIds,
+      type: "read_messages",
+      payload: {
+        messageIds: msg.payload.messageIds,
+      },
     },
   });
 }
@@ -187,16 +205,19 @@ export async function sendGroupMessage(
 
   for (const member of groupDetails.members) {
     if (member.userId !== senderId) {
-      sockets.sendToUser(member.userId, {
-        type: "receive_group_message",
+      await pubsub.publishMessage({
+        userId: member.userId,
         payload: {
-          groupId,
-          groupName: groupDetails.name,
-          from: senderId,
-          name: savedMessage.sender.name,
-          content,
-          id,
-          createdAt: savedMessage.createdAt,
+          type: "receive_group_message",
+          payload: {
+            groupId,
+            groupName: groupDetails.name,
+            from: senderId,
+            name: savedMessage.sender.name,
+            content,
+            id,
+            createdAt: savedMessage.createdAt,
+          },
         },
       });
     }
@@ -216,9 +237,12 @@ export async function sendGroupTyping(
 
   for (const member of groupDetails.members) {
     if (member.userId !== senderId) {
-      sockets.sendToUser(member.userId, {
-        type: "group_typing",
-        payload: { groupId, userId: senderId },
+      await pubsub.publishMessage({
+        userId: member.userId,
+        payload: {
+          type: "group_typing",
+          payload: { groupId, userId: senderId },
+        },
       });
     }
   }
@@ -238,9 +262,12 @@ export async function sendGroupStopTyping(
 
   for (const member of groupDetails.members) {
     if (member.userId !== senderId) {
-      sockets.sendToUser(member.userId, {
-        type: "group_stop_typing",
-        payload: { groupId, userId: senderId },
+      await pubsub.publishMessage({
+        userId: member.userId,
+        payload: {
+          type: "group_stop_typing",
+          payload: { groupId, userId: senderId },
+        },
       });
     }
   }

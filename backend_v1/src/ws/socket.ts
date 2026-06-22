@@ -13,11 +13,14 @@ import {
 } from "./handlers/message.handler.js";
 import { sockets } from "./store.js";
 import { WsMessageSchema } from "./schemas/message.schema.js";
+import { presence } from "../services/presence.service.js";
+import { pubsub } from "../services/pubsub.service.js";
+import { initializeSubscriptions } from "../lib/redis.js";
 
 export function initWebSocketServer(server: HttpServer) {
   const wss = new WebSocketServer({ server });
 
-  wss.on("connection", (ws: WebSocket, request) => {
+  wss.on("connection", async (ws: WebSocket, request) => {
     ws.on("error", console.error);
 
     const id = extractUserId(request);
@@ -26,24 +29,8 @@ export function initWebSocketServer(server: HttpServer) {
       return;
     }
 
-    sockets.addUser(id, ws);
-    markMessagesAsDelivered(id);
-    ws.send(
-      JSON.stringify({
-        type: "online-users",
-        payload: {
-          users: [...sockets.getOnlineUsers()],
-        },
-      }),
-    );
-
-    sockets.broadcast({
-      type: "online",
-      payload: {
-        userId: id,
-      },
-    });
-
+    // Register message and close handlers BEFORE any async operations so they
+    // are never missed if the client disconnects during the async setup phase.
     ws.on("message", async (data) => {
       try {
         const parsed = WsMessageSchema.safeParse(JSON.parse(data.toString()));
@@ -95,12 +82,39 @@ export function initWebSocketServer(server: HttpServer) {
       }
     });
 
-    ws.on("close", () => {
-      sockets.removeUserSocket(id, ws);
-      sockets.broadcast({
-        type: "offline",
-        payload: { userId: id },
-      });
+    ws.on("close", async () => {
+      try {
+        sockets.removeUserSocket(id, ws);
+        if (!sockets.getUserSocket(id)) {
+          const wentOffline = await presence.markOffline(id);
+          if (wentOffline)
+            await pubsub.publishPresence({
+              type: "offline",
+              userId: id,
+            });
+        }
+      } catch (e) {
+        // Suppress errors from stale close handlers firing after Redis shutdown
+      }
     });
+
+    // Async setup: runs after handlers are registered, so events during setup
+    // are handled correctly.
+    sockets.addUser(id, ws);
+    await markMessagesAsDelivered(id);
+    const wentOnline = await presence.markOnline(id);
+    if (wentOnline)
+      await pubsub.publishPresence({
+        type: "online",
+        userId: id,
+      });
+    ws.send(
+      JSON.stringify({
+        type: "online-users",
+        payload: {
+          users: [...(await presence.getOnlineUsers())],
+        },
+      }),
+    );
   });
 }
