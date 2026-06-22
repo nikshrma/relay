@@ -13,11 +13,13 @@ import {
 } from "./handlers/message.handler.js";
 import { sockets } from "./store.js";
 import { WsMessageSchema } from "./schemas/message.schema.js";
+import { presence } from "../services/presence.service.js";
+import { pubsub } from "../services/pubsub.service.js";
 
 export function initWebSocketServer(server: HttpServer) {
   const wss = new WebSocketServer({ server });
 
-  wss.on("connection", (ws: WebSocket, request) => {
+  wss.on("connection", async (ws: WebSocket, request) => {
     ws.on("error", console.error);
 
     const id = extractUserId(request);
@@ -27,22 +29,21 @@ export function initWebSocketServer(server: HttpServer) {
     }
 
     sockets.addUser(id, ws);
-    markMessagesAsDelivered(id);
+    await markMessagesAsDelivered(id);
+    const wentOnline = await presence.markOnline(id);
+    if (wentOnline)
+      await pubsub.publishPresence({
+        type: "online",
+        userId: id,
+      });
     ws.send(
       JSON.stringify({
         type: "online-users",
         payload: {
-          users: [...sockets.getOnlineUsers()],
+          users: [...(await presence.getOnlineUsers())],
         },
       }),
     );
-
-    sockets.broadcast({
-      type: "online",
-      payload: {
-        userId: id,
-      },
-    });
 
     ws.on("message", async (data) => {
       try {
@@ -95,12 +96,16 @@ export function initWebSocketServer(server: HttpServer) {
       }
     });
 
-    ws.on("close", () => {
+    ws.on("close", async () => {
       sockets.removeUserSocket(id, ws);
-      sockets.broadcast({
-        type: "offline",
-        payload: { userId: id },
-      });
+      if (!sockets.getUserSocket(id)) {
+        const wentOffline = await presence.markOffline(id);
+        if (wentOffline)
+          await pubsub.publishPresence({
+            type: "offline",
+            userId: id,
+          });
+      }
     });
   });
 }
