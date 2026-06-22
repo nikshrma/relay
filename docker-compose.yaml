@@ -39,5 +39,10 @@ services:
       - backend
     ports:
       - 80:80
+  redis:
+    image: redis:7-alpine
+    container_name: "relay-redis"
+    ports:
+      - 6379:6379
 volumes:
   relay_db:
