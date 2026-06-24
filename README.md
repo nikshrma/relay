@@ -85,12 +85,12 @@ This is the part I find most interesting. Here's what happens when you hit send:
 1. **Frontend** calls `sendMessage(to, content)` which writes a JSON frame to the open WebSocket: `{ type: "send_message", payload: { to, content } }`
 2. **Backend WS handler** receives it, validates the payload, and does two things simultaneously:
    - Persists the message to PostgreSQL via Prisma
-   - Looks up the recipient's socket in the in-memory connection store (which I will update to be a singleton SocketManager class instead of just a map)
+   - Publishes the message to a Redis Pub/Sub channel, allowing the `SocketManager` to deliver it regardless of which server instance the recipient is connected to.
 3. If the recipient is online, the backend **pushes** the message to their socket as a `receive_message` event, they see it instantly
 4. If they're offline, the message is still in the database. Next time they open the chat, the frontend fetches history via the REST endpoint `/messages?userId=...`
 5. The sender gets an `ack` back over the WebSocket confirming the message was processed
 
-No message broker, no queue, no Redis (yet - that is the plan for v2). Just an in-memory `Map<userId, WebSocket>` and a database. It's simple, it works for a single server, and it's the kind of thing that makes you appreciate what a system like Kafka(v2.5 maybe?) is actually solving when you eventually need it.
+There's no heavy message queue like Kafka (yet - maybe v2.5?), but we've now upgraded to use Redis Pub/Sub for horizontal scaling instead of just relying on an in-memory `Map`. It's the kind of thing that makes you appreciate distributed systems when you actually need them.
 
 ### The Auth Flow
 
@@ -112,6 +112,27 @@ One thing I added while hardening the app was proper runtime validation with Zod
 - **Structured error responses** — invalid payloads return `400` responses with treeified validation errors, which makes debugging bad requests way less annoying
 
 That matters more than it sounds. With REST plus raw WebSockets, there is no framework saving you from malformed payloads unless you add that protection yourself.
+
+### Scaling Out with Redis
+
+The initial version of Relay relied entirely on an in-memory `Map<userId, WebSocket>` to keep track of connections. This worked perfectly for a single Node.js instance but meant the app couldn't be horizontally scaled. If User A was connected to Server 1 and User B was connected to Server 2, they couldn't talk to each other.
+
+To solve this, I introduced Redis as a Pub/Sub message broker. Now, when a message is sent or a user's presence changes (like coming online or typing), the server doesn't just look for local connections. It publishes the event to a Redis channel (`MESSAGE_CHANNEL` or `PRESENCE_CHANNEL`). All server instances subscribe to these channels, and whichever server has the recipient connected locally is the one that pushes the message down the WebSocket. It's a clean, efficient way to scale real-time traffic across multiple instances without adding massive complexity.
+
+### Group Messaging
+
+Moving from 1:1 chats to N-way group chats required a subtle but important shift in the architecture.
+
+Instead of completely rewriting the WebSocket events, I reused the existing ones but introduced a `groupId` payload. A new `GroupMessage` table was added, linked to `Group` and `GroupMember` tables.
+
+When you send a message to a group, the backend:
+
+1. Validates that you are actually a member of that group.
+2. Persists the message to the database.
+3. Fetches all other members of the group.
+4. Uses the Redis Pub/Sub system to broadcast the message to all online members simultaneously, excluding the sender.
+
+Typing indicators work the same way—when someone starts typing in a group, the event is fanned out to everyone else in real-time. It's a great example of how a solid foundation in V1 made adding complex features in V2 much more straightforward.
 
 ### WebSocket Reconnection
 
@@ -382,9 +403,9 @@ The foundation works, but it's not production-grade yet. V1.5 is about making th
 
 ### V2 -> Scaling Out
 
-- [ ] **Group messaging** — Pub/sub model for group chats
-- [ ] **Redis** — Replace in-memory connection store with Redis pub/sub for horizontal scaling across multiple server instances
-- [ ] **Message queuing** — Reliable delivery even when services are temporarily down
+- [x] **Group messaging** — Pub/sub model for group chats
+- [x] **Redis** — Replace in-memory connection store with Redis pub/sub for horizontal scaling across multiple server instances
+- [ ] ~~**Message queuing** — Reliable delivery even when services are temporarily down~~
 
 ## Things I Learned
 
