@@ -67,9 +67,13 @@ The goal was simple: build a full-stack chat app where two people can talk to ea
                           │  │   REST Routes    │      │   WebSocket Server   │ │
                           │  │ /signup, /signin │      │   message handling,  │ │
                           │  │ /users, /messages│      │  connection mgmt     │ │
-                          │  │ /me, /logout     │      │                      │ │
+                          │  │ /groups, /logout │      │                      │ │
                           │  └────────┬─────────┘      └──────────┬───────────┘ │
                           │           │                           │             │
+                          │           │                ┌──────────▼───────────┐ │
+                          │           │                │    Redis Pub/Sub     │ │
+                          │           │                │   (sync instances)   │ │
+                          │           │                └──────────┬───────────┘ │
                           │           ▼                           ▼             │
                           │  ┌─────────────────────────────────────────────────┐│
                           │  │                  Prisma ORM                     ││
