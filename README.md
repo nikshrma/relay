@@ -2,6 +2,21 @@
 
 A real-time chat application built from scratch i.e. no Firebase, no Socket.IO, no magic. Just raw WebSockets, Express, React, and a PostgreSQL database.
 
+## Table of Contents
+
+- [Why I Built This](#why-i-built-this)
+- [What It Does](#what-it-does)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Database Schema](#database-schema)
+- [Testing Workflows](#testing-workflows)
+- [CI/CD Workflows](#cicd-workflows)
+- [Roadmap](#roadmap)
+- [Things I Learned](#things-i-learned)
+- [Why pnpm?](#why-pnpm)
+
 ## Why I Built This
 
 I wanted to actually understand what happens under the hood when you send a message on WhatsApp or Telegram. How WebSockets and cookies actually work together. Not the "use this library and it works" kind of understanding. Relay is the result of that curiosity.
